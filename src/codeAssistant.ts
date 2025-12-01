@@ -199,7 +199,8 @@ export class CodeAssistant {
       'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
       'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each',
       'import', 'export', 'from', 'default', 'function', 'class', 'const',
-      'let', 'var', 'return', 'if', 'else', 'try', 'catch', 'throw', 'new'
+      'let', 'var', 'return', 'if', 'else', 'try', 'catch', 'throw', 'new',
+      'private', 'public', 'static', 'async', 'await', 'get', 'set'
     ]);
 
     const keywords = new Set<string>();
@@ -208,6 +209,7 @@ export class CodeAssistant {
       const words = source.content
         .toLowerCase()
         .split(/\s+/)
+        .map((w: string) => w.replace(/[^a-z0-9]/g, '')) // Remove non-alphanumeric chars
         .filter((w: string) => w.length > 3 && !stopWords.has(w))
         .slice(0, 5);
       words.forEach((w: string) => keywords.add(w));
