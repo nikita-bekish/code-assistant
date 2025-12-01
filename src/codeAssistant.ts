@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { ProjectConfig, AnswerWithSources, ProjectContext } from './types/index.js';
+import { ProjectConfig, AnswerWithSources, ProjectContext, SearchResult } from './types/index.js';
 import { ProjectIndexer } from './projectIndexer.js';
 import { GitHelper } from './gitHelper.js';
 import { RAGPipeline } from './rag/ragPipeline.js';
@@ -56,7 +56,8 @@ export class CodeAssistant {
 
       console.log('CodeAssistant initialized successfully');
     } catch (error) {
-      throw new Error(`Failed to initialize CodeAssistant: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to initialize CodeAssistant: ${errorMessage}`);
     }
   }
 
@@ -153,7 +154,7 @@ export class CodeAssistant {
     return await this.git.getStatus();
   }
 
-  private _generateAnswer(question: string, sources: any[]): string {
+  private _generateAnswer(question: string, sources: SearchResult[]): string {
     // Simple answer generation based on sources
     // In production, this would use the actual LLM
     if (sources.length === 0) {
@@ -180,7 +181,7 @@ export class CodeAssistant {
     return answer;
   }
 
-  private _extractKeywords(sources: any[]): string[] {
+  private _extractKeywords(sources: SearchResult[]): string[] {
     const keywords = new Set<string>();
 
     for (const source of sources) {
@@ -194,7 +195,7 @@ export class CodeAssistant {
     return Array.from(keywords).slice(0, 5);
   }
 
-  private _calculateConfidence(sources: any[]): number {
+  private _calculateConfidence(sources: SearchResult[]): number {
     if (sources.length === 0) return 0;
     if (sources.length >= 3) return 0.9;
     if (sources.length >= 1) return 0.7;

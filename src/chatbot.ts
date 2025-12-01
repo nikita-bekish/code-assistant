@@ -65,7 +65,8 @@ export class ChatBotCLI {
 
           console.log(chalk.gray(`\nConfidence: ${(result.confidence * 100).toFixed(0)}%\n`));
         } catch (error) {
-          console.log(chalk.red(`\nError: ${error}\n`));
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.log(chalk.red(`\nError: ${errorMessage}\n`));
         }
       }
 
@@ -130,7 +131,8 @@ export class ChatBotCLI {
       }
       console.log('');
     } catch (error) {
-      console.log(chalk.red(`\nError: ${error}\n`));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log(chalk.red(`\nError: ${errorMessage}\n`));
     }
   }
 
@@ -164,7 +166,8 @@ export class ChatBotCLI {
       }
       console.log('');
     } catch (error) {
-      console.log(chalk.red(`\nError: ${error}\n`));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log(chalk.red(`\nError: ${errorMessage}\n`));
     }
   }
 

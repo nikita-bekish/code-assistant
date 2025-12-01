@@ -192,8 +192,8 @@ export class ProjectIndexer {
     const match = sizeStr.match(/^(\d+)([A-Z]+)$/);
     if (!match) return 1024 * 1024; // Default 1MB
 
-    const [, value, unit] = match;
-    return parseInt(value) * (units[unit] || 1);
+    const [, value, unit] = match as RegExpMatchArray;
+    return parseInt(value, 10) * (units[unit as keyof typeof units] || 1);
   }
 
   private _getFileTypeCounts(): Record<string, number> {
