@@ -107,21 +107,24 @@ export class CodeAssistant {
     // Search for relevant context
     const searchResults = this.rag.search(question, this.config.llm.maxResults);
 
-    // Format context
-    const context = this.rag.formatContext(searchResults);
-
     // Create prompt
     const systemPrompt = this.config.prompt.system
       .replace('{projectName}', this.config.projectName);
 
-    const prompt = this.rag.createPrompt(systemPrompt, question, context);
-
     // Generate answer using LLM with tools if available
     let answer: string;
     try {
-      if (this.llm && searchResults.length > 0) {
-        answer = await this._generateAnswerWithTools(prompt);
+      const isGitQuestion = this._isGitQuestion(question);
+      if (this.llm && isGitQuestion) {
+        // For git questions, use tool calling without RAG context
+        answer = await this._generateAnswerWithTools(systemPrompt, question);
+      } else if (this.llm && searchResults.length > 0) {
+        // For non-git questions with search results, use RAG + LLM
+        const context = this.rag.formatContext(searchResults);
+        const ragPrompt = this.rag.createPrompt(systemPrompt, question, context);
+        answer = await this._generateAnswerWithRAG(ragPrompt);
       } else {
+        // Fallback: no LLM or no search results
         answer = this._generateAnswer(question, searchResults);
       }
     } catch (error) {
@@ -218,13 +221,13 @@ export class CodeAssistant {
    * Generate answer using LLM with tool support
    * Allows LLM to call git tools when needed
    */
-  private async _generateAnswerWithTools(prompt: string): Promise<string> {
+  private async _generateAnswerWithTools(systemPrompt: string, question: string): Promise<string> {
     if (!this.llm) {
       throw new Error('LLM not initialized');
     }
 
     const toolsDescription = this._getToolsDescription();
-    let fullPrompt = prompt + '\n\n' + toolsDescription;
+    let fullPrompt = `${systemPrompt}\n\nQuestion: ${question}\n\n${toolsDescription}`;
     let finalAnswer = '';
     let iterations = 0;
     const maxIterations = 5;
@@ -249,8 +252,16 @@ export class CodeAssistant {
         const [, toolName] = toolMatch;
         const toolResult = await this._executeTool(toolName);
 
-        // Add tool result and continue
-        fullPrompt = `${finalAnswer}\n\nTool result:\n${toolResult}\n\nContinue with your response (you can use more tools if needed or provide final answer):`;
+        // Debug logging
+        console.error(`[Tool Execution] Tool: ${toolName}, Result: ${toolResult}`);
+
+        // Add tool result and continue with a clearer prompt
+        fullPrompt = `Based on the tool result below, answer the user's original question directly and naturally.
+
+Tool Result:
+${toolResult}
+
+Now provide your final answer to the user's question. Use the tool result above as your source of truth. Do NOT add explanations about tools or how they work. Just answer the question naturally.`;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.error(`Error during tool iteration: ${errorMsg}`);
@@ -262,24 +273,66 @@ export class CodeAssistant {
   }
 
   /**
+   * Generate answer using LLM with RAG context (for non-git questions)
+   */
+  private async _generateAnswerWithRAG(prompt: string): Promise<string> {
+    if (!this.llm) {
+      throw new Error('LLM not initialized');
+    }
+
+    try {
+      const response = await this.llm.invoke(prompt);
+      return typeof response === 'string' ? response : String(response);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error(`Error generating answer with RAG: ${errorMsg}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Detect if a question is git-related
+   */
+  private _isGitQuestion(question: string): boolean {
+    const gitKeywords = [
+      'branch', 'status', 'commit', 'git', 'changes', 'modified',
+      'staged', 'untracked', 'push', 'pull', 'merge', 'rebase',
+      'checkout', 'tag', 'log', 'diff', 'stash', 'reset',
+      'what branch', 'current branch', 'which branch',
+      'git status', 'repository status', 'repo status',
+      'what changes', 'modified files', 'changed files'
+    ];
+
+    const lowerQuestion = question.toLowerCase();
+    return gitKeywords.some(keyword => lowerQuestion.includes(keyword));
+  }
+
+  /**
    * Get description of available tools for the LLM
    */
   private _getToolsDescription(): string {
     return `
-You have access to the following tools to get git repository information:
+**IMPORTANT: You MUST use tools to answer questions about git!**
 
-1. git_branch - Get the current git branch name
-   Usage: <tool>git_branch</tool><input></input>
+You have access to two tools:
 
-2. git_status - Get git repository status (shows staged, unstaged, and untracked files)
-   Usage: <tool>git_status</tool><input></input>
+1. git_branch - Returns the current git branch name
+2. git_status - Returns git repository status (M for modified, ?? for untracked, etc)
 
-When you need information about the git repository, use these tools.
-Format tool calls exactly like this:
+**When to use tools:**
+- If question asks "what branch", use: <tool>git_branch</tool>
+- If question asks "status" or "changes", use: <tool>git_status</tool>
+- If question mentions "branch", use: <tool>git_branch</tool>
+
+**REQUIRED FORMAT:**
 <tool>tool_name</tool>
-<input>input_text</input>
 
-Important: Always provide your final answer after using tools. Don't end with tool output.`;
+Then in your response, incorporate the tool result naturally.
+
+Example:
+User: "What branch are we on?"
+You: <tool>git_branch</tool>
+Then say: "We are on the main branch." (with actual result from tool)`;
   }
 
   /**

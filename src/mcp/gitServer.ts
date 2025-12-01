@@ -1,6 +1,6 @@
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { GitHelper } from '../gitHelper.js';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { GitHelper } from "../gitHelper.js";
 
 /**
  * MCP Server for Git Tools
@@ -14,14 +14,17 @@ export class GitMCPServer {
     this.gitHelper = new GitHelper(gitPath);
 
     // Create MCP server with capabilities
-    this.server = new McpServer({
-      name: 'git-mcp-server',
-      version: '1.0.0',
-    }, {
-      capabilities: {
-        tools: {},
+    this.server = new McpServer(
+      {
+        name: "git-mcp-server",
+        version: "1.0.0",
       },
-    });
+      {
+        capabilities: {
+          tools: {},
+        },
+      }
+    );
 
     this.setupHandlers();
   }
@@ -34,8 +37,8 @@ export class GitMCPServer {
      * Register git_branch tool
      */
     this.server.tool(
-      'git_branch',
-      'Get the current git branch name',
+      "git_branch",
+      "Get the current git branch name",
       {},
       async () => {
         try {
@@ -43,17 +46,18 @@ export class GitMCPServer {
           return {
             content: [
               {
-                type: 'text' as const,
+                type: "text" as const,
                 text: result,
               },
             ],
           };
         } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
           return {
             content: [
               {
-                type: 'text' as const,
+                type: "text" as const,
                 text: `Error: ${errorMsg}`,
               },
             ],
@@ -67,8 +71,8 @@ export class GitMCPServer {
      * Register git_status tool
      */
     this.server.tool(
-      'git_status',
-      'Get the git repository status (staged, unstaged, untracked files)',
+      "git_status",
+      "Get the git repository status (staged, unstaged, untracked files)",
       {},
       async () => {
         try {
@@ -76,17 +80,18 @@ export class GitMCPServer {
           return {
             content: [
               {
-                type: 'text' as const,
+                type: "text" as const,
                 text: result,
               },
             ],
           };
         } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
           return {
             content: [
               {
-                type: 'text' as const,
+                type: "text" as const,
                 text: `Error: ${errorMsg}`,
               },
             ],
@@ -117,7 +122,7 @@ export class GitMCPServer {
     try {
       const status = await this.gitHelper.getStatus();
       if (!status) {
-        return 'Git repository is clean (no changes)';
+        return "Git repository is clean (no changes)";
       }
       return `Git Status:\n${status}`;
     } catch (error) {
@@ -132,7 +137,7 @@ export class GitMCPServer {
   async start(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('[Git MCP Server] Started and listening on stdio');
+    console.error("[Git MCP Server] Started and listening on stdio");
   }
 
   /**
@@ -140,6 +145,6 @@ export class GitMCPServer {
    */
   async stop(): Promise<void> {
     // Server closes when transport closes
-    console.error('[Git MCP Server] Stopped');
+    console.error("[Git MCP Server] Stopped");
   }
 }

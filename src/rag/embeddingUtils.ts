@@ -54,21 +54,49 @@ async function generateEmbeddingsBatch(
   model: string
 ): Promise<number[][]> {
   try {
-    const response = await fetch(`${baseUrl}/api/embed`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        input: texts,
-      }),
-    });
+    // Process embeddings one by one to handle the Ollama API format
+    const embeddings: number[][] = [];
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    for (let i = 0; i < texts.length; i++) {
+      const text = texts[i];
+
+      // Add progress logging every 50 chunks
+      if (i % 50 === 0) {
+        console.log(`  Processing embedding ${i + 1}/${texts.length}...`);
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout per chunk
+
+      try {
+        const response = await fetch(`${baseUrl}/api/embeddings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            prompt: text,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json() as { embedding: number[] };
+        embeddings.push(data.embedding);
+
+        // Small delay between requests to avoid overwhelming Ollama
+        await new Promise(resolve => setTimeout(resolve, 10));
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
+      }
     }
 
-    const data = await response.json() as { embeddings: number[][] };
-    return data.embeddings;
+    return embeddings;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to generate embeddings: ${errorMessage}`);
@@ -149,12 +177,12 @@ export async function isOllamaAvailable(
   model: string = 'nomic-embed-text'
 ): Promise<boolean> {
   try {
-    const response = await fetch(`${baseUrl}/api/embed`, {
+    const response = await fetch(`${baseUrl}/api/embeddings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
-        input: ['test'],
+        prompt: 'test',
       }),
     });
     return response.ok;
