@@ -68,6 +68,16 @@ export class ProjectIndexer {
     return this.chunks;
   }
 
+  async loadStatsFromFile(statsPath: string): Promise<void> {
+    try {
+      const statsData = await fs.readFile(statsPath, 'utf-8');
+      this.indexStats = JSON.parse(statsData);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to load index stats from ${statsPath}: ${errorMessage}`);
+    }
+  }
+
   private async _indexFolder(folderPath: string, relativeFolder: string): Promise<void> {
     try {
       const entries = await fs.readdir(folderPath, { withFileTypes: true });

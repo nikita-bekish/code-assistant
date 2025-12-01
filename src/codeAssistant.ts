@@ -27,22 +27,26 @@ export class CodeAssistant {
   async initialize(): Promise<void> {
     try {
       // Check if index exists
-      const indexPath = path.join(
+      const outputDir = path.join(
         this.config.paths.root,
-        this.config.paths.output,
-        'chunks.json'
+        this.config.paths.output
       );
+      const indexPath = path.join(outputDir, 'chunks.json');
+      const statsPath = path.join(outputDir, 'stats.json');
 
       let chunks;
       try {
         const chunkData = await fs.readFile(indexPath, 'utf-8');
         chunks = JSON.parse(chunkData);
+        // Load stats from disk for existing index
+        await this.indexer.loadStatsFromFile(statsPath);
       } catch (error) {
         console.log('Index not found. Creating index...');
         try {
           await this.indexer.indexProject();
           const chunkData = await fs.readFile(indexPath, 'utf-8');
           chunks = JSON.parse(chunkData);
+          // Stats are already loaded after indexProject()
         } catch (indexError) {
           const indexErrorMsg = indexError instanceof Error ? indexError.message : String(indexError);
           throw new Error(`Failed to create index: ${indexErrorMsg}`);
