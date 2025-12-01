@@ -201,7 +201,7 @@ export class ChatBotCLI {
     console.log(chalk.cyan("\nAvailable Commands:"));
     console.log(
       chalk.white(
-        "  /help [question] - Ask about project structure & documentation"
+        "  /help [question] - Ask about project (RAG search + Git tools)"
       )
     );
     console.log(
@@ -212,10 +212,14 @@ export class ChatBotCLI {
     console.log(chalk.white("  /mcp             - MCP commands"));
     console.log(chalk.white("  /clear           - Clear conversation history"));
     console.log(chalk.white("  /exit            - Exit the assistant\n"));
+    console.log(chalk.cyan("💡 Available Tools (LLM can use automatically):"));
+    console.log(chalk.gray("  • git_branch     - Get current git branch"));
+    console.log(chalk.gray("  • git_status     - Get repository status\n"));
     console.log(chalk.gray("Examples:"));
     console.log(chalk.gray("  /help What is the project structure?"));
-    console.log(chalk.gray("  /help How do I install this project?"));
-    console.log(chalk.gray("  /help What are the main components?\n"));
+    console.log(chalk.gray("  /help What branch are we on?"));
+    console.log(chalk.gray("  /help Show me the git status"));
+    console.log(chalk.gray("  /help How do I install this project?\n"));
   }
 
   private async _showGitStatus(): Promise<void> {

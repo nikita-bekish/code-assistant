@@ -78,7 +78,7 @@ export class CodeAssistant {
       });
 
       // Initialize MCP server for git integration
-      this.mcpServer = new GitMCPServer(this.config.paths.git, 3001);
+      this.mcpServer = new GitMCPServer(this.config.paths.git);
 
       // Get project context
       this.projectContext = await this.getProjectContext();
@@ -116,11 +116,11 @@ export class CodeAssistant {
 
     const prompt = this.rag.createPrompt(systemPrompt, question, context);
 
-    // Generate answer using LLM if available
+    // Generate answer using LLM with tools if available
     let answer: string;
     try {
       if (this.llm && searchResults.length > 0) {
-        answer = await this._generateAnswerWithLLM(prompt);
+        answer = await this._generateAnswerWithTools(prompt);
       } else {
         answer = this._generateAnswer(question, searchResults);
       }
@@ -212,6 +212,96 @@ export class CodeAssistant {
    */
   async getGitStatus(): Promise<string> {
     return await this.git.getStatus();
+  }
+
+  /**
+   * Generate answer using LLM with tool support
+   * Allows LLM to call git tools when needed
+   */
+  private async _generateAnswerWithTools(prompt: string): Promise<string> {
+    if (!this.llm) {
+      throw new Error('LLM not initialized');
+    }
+
+    const toolsDescription = this._getToolsDescription();
+    let fullPrompt = prompt + '\n\n' + toolsDescription;
+    let finalAnswer = '';
+    let iterations = 0;
+    const maxIterations = 5;
+
+    while (iterations < maxIterations) {
+      iterations++;
+
+      try {
+        const response = await this.llm.invoke(fullPrompt);
+        const responseText = typeof response === 'string' ? response : String(response);
+        finalAnswer += responseText;
+
+        // Check if tool was called in the response
+        const toolMatch = responseText.match(/<tool>(\w+)<\/tool>\s*<input>(.*?)<\/input>/s);
+
+        if (!toolMatch) {
+          // No tool called, we're done
+          break;
+        }
+
+        const [, toolName] = toolMatch;
+        const toolResult = await this._executeTool(toolName);
+
+        // Add tool result and continue
+        fullPrompt = `${finalAnswer}\n\nTool result:\n${toolResult}\n\nContinue with your response (you can use more tools if needed or provide final answer):`;
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`Error during tool iteration: ${errorMsg}`);
+        break;
+      }
+    }
+
+    return finalAnswer.trim();
+  }
+
+  /**
+   * Get description of available tools for the LLM
+   */
+  private _getToolsDescription(): string {
+    return `
+You have access to the following tools to get git repository information:
+
+1. git_branch - Get the current git branch name
+   Usage: <tool>git_branch</tool><input></input>
+
+2. git_status - Get git repository status (shows staged, unstaged, and untracked files)
+   Usage: <tool>git_status</tool><input></input>
+
+When you need information about the git repository, use these tools.
+Format tool calls exactly like this:
+<tool>tool_name</tool>
+<input>input_text</input>
+
+Important: Always provide your final answer after using tools. Don't end with tool output.`;
+  }
+
+  /**
+   * Execute a tool and return its result
+   */
+  private async _executeTool(toolName: string): Promise<string> {
+    try {
+      switch (toolName) {
+        case 'git_branch': {
+          const stats = await this.git.getProjectStats();
+          return `Current git branch: ${stats.branch}`;
+        }
+        case 'git_status': {
+          const status = await this.git.getStatus();
+          return status ? `Git Status:\n${status}` : 'Git repository is clean (no changes)';
+        }
+        default:
+          return `Unknown tool: ${toolName}`;
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      return `Error executing tool: ${errorMsg}`;
+    }
   }
 
   private async _generateAnswerWithLLM(prompt: string): Promise<string> {

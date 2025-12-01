@@ -1,173 +1,145 @@
-import http from 'http';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { GitHelper } from '../gitHelper.js';
 
 /**
  * MCP Server for Git Tools
- * Provides git_branch and git_status tools via JSON-RPC
+ * Provides git_branch and git_status tools via Model Context Protocol
  */
 export class GitMCPServer {
-  private server: http.Server | null = null;
+  private server: McpServer;
   private gitHelper: GitHelper;
-  private port: number;
 
-  constructor(gitPath: string, port: number = 3001) {
+  constructor(gitPath: string) {
     this.gitHelper = new GitHelper(gitPath);
-    this.port = port;
-  }
 
-  /**
-   * Start the MCP server
-   */
-  start(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.server = http.createServer(async (req, res) => {
-        // Enable CORS
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-        res.setHeader('Content-Type', 'application/json');
-
-        if (req.method === 'OPTIONS') {
-          res.writeHead(200);
-          res.end();
-          return;
-        }
-
-        if (req.method !== 'POST') {
-          res.writeHead(405);
-          res.end(JSON.stringify({ error: 'Method not allowed' }));
-          return;
-        }
-
-        let body = '';
-        req.on('data', (chunk) => {
-          body += chunk.toString();
-        });
-
-        req.on('end', async () => {
-          try {
-            const request = JSON.parse(body);
-            const response = await this.handleRequest(request);
-            res.writeHead(200);
-            res.end(JSON.stringify(response));
-          } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : String(error);
-            res.writeHead(400);
-            res.end(JSON.stringify({ error: errorMsg }));
-          }
-        });
-      });
-
-      this.server.listen(this.port, () => {
-        console.log(`🔌 Git MCP Server started on port ${this.port}`);
-        resolve();
-      });
-
-      this.server.on('error', reject);
+    // Create MCP server with capabilities
+    this.server = new McpServer({
+      name: 'git-mcp-server',
+      version: '1.0.0',
+    }, {
+      capabilities: {
+        tools: {},
+      },
     });
+
+    this.setupHandlers();
   }
 
   /**
-   * Handle MCP JSON-RPC request
+   * Setup MCP server request handlers
    */
-  private async handleRequest(request: any): Promise<any> {
-    const { id, method, params } = request;
-
-    try {
-      let result;
-
-      switch (method) {
-        case 'git_branch':
-          result = await this.getGitBranch();
-          break;
-
-        case 'git_status':
-          result = await this.getGitStatus();
-          break;
-
-        case 'tools/list':
-          result = this.listTools();
-          break;
-
-        default:
-          throw new Error(`Unknown method: ${method}`);
+  private setupHandlers(): void {
+    /**
+     * Register git_branch tool
+     */
+    this.server.tool(
+      'git_branch',
+      'Get the current git branch name',
+      {},
+      async () => {
+        try {
+          const result = await this.handleGitBranch();
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: result,
+              },
+            ],
+          };
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `Error: ${errorMsg}`,
+              },
+            ],
+            isError: true,
+          };
+        }
       }
+    );
 
-      return {
-        jsonrpc: '2.0',
-        id,
-        result,
-      };
+    /**
+     * Register git_status tool
+     */
+    this.server.tool(
+      'git_status',
+      'Get the git repository status (staged, unstaged, untracked files)',
+      {},
+      async () => {
+        try {
+          const result = await this.handleGitStatus();
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: result,
+              },
+            ],
+          };
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `Error: ${errorMsg}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
+  }
+
+  /**
+   * Handle git_branch tool call
+   */
+  private async handleGitBranch(): Promise<string> {
+    try {
+      const stats = await this.gitHelper.getProjectStats();
+      return `Current git branch: ${stats.branch}`;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      return {
-        jsonrpc: '2.0',
-        id,
-        error: {
-          code: -32603,
-          message: errorMsg,
-        },
-      };
+      throw new Error(`Failed to get git branch: ${errorMsg}`);
     }
   }
 
   /**
-   * Get current git branch
+   * Handle git_status tool call
    */
-  private async getGitBranch(): Promise<string> {
-    const stats = await this.gitHelper.getProjectStats();
-    return stats.branch;
+  private async handleGitStatus(): Promise<string> {
+    try {
+      const status = await this.gitHelper.getStatus();
+      if (!status) {
+        return 'Git repository is clean (no changes)';
+      }
+      return `Git Status:\n${status}`;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to get git status: ${errorMsg}`);
+    }
   }
 
   /**
-   * Get git status
+   * Start the MCP server (use stdio transport)
    */
-  private async getGitStatus(): Promise<string> {
-    return await this.gitHelper.getStatus();
-  }
-
-  /**
-   * List available tools
-   */
-  private listTools(): any {
-    return {
-      tools: [
-        {
-          name: 'git_branch',
-          description: 'Get current git branch name',
-          inputSchema: {
-            type: 'object',
-            properties: {},
-            required: [],
-          },
-        },
-        {
-          name: 'git_status',
-          description: 'Get git repository status (staged, unstaged, untracked files)',
-          inputSchema: {
-            type: 'object',
-            properties: {},
-            required: [],
-          },
-        },
-      ],
-    };
+  async start(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    console.error('[Git MCP Server] Started and listening on stdio');
   }
 
   /**
    * Stop the MCP server
    */
-  stop(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.server) {
-        resolve();
-        return;
-      }
-
-      this.server.close((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+  async stop(): Promise<void> {
+    // Server closes when transport closes
+    console.error('[Git MCP Server] Stopped');
   }
 }
