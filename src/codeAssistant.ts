@@ -238,7 +238,8 @@ export class CodeAssistant {
         finalAnswer += responseText;
 
         // Check if tool was called in the response
-        const toolMatch = responseText.match(/<tool>(\w+)<\/tool>\s*<input>(.*?)<\/input>/s);
+        // Support both formats: <tool>name</tool> and <tool>name</tool><input></input>
+        const toolMatch = responseText.match(/<tool>(\w+)<\/tool>(?:\s*<input>(.*?)<\/input>)?/s);
 
         if (!toolMatch) {
           // No tool called, we're done
@@ -301,24 +302,6 @@ Important: Always provide your final answer after using tools. Don't end with to
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       return `Error executing tool: ${errorMsg}`;
-    }
-  }
-
-  private async _generateAnswerWithLLM(prompt: string): Promise<string> {
-    try {
-      if (!this.llm) {
-        throw new Error('LLM not initialized');
-      }
-
-      // Call the LLM with the prompt
-      const response = await this.llm.invoke(prompt);
-
-      // Extract text from response
-      const answer = typeof response === 'string' ? response : String(response);
-      return answer.trim();
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to generate answer with LLM: ${errorMsg}`);
     }
   }
 
