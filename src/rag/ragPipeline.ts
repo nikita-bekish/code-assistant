@@ -94,33 +94,44 @@ Please provide a detailed answer based on the provided context. Always cite your
       return 0;
     }
 
-    const querySet = new Set(queryWords);
-    const chunkSet = new Set(chunkWords);
-
-    // Calculate token overlap - count matching words
-    let intersection = 0;
-    for (const word of querySet) {
-      if (chunkSet.has(word)) {
-        intersection++;
-      }
+    // Build frequency map for chunk words
+    const chunkFreq = new Map<string, number>();
+    for (const word of chunkWords) {
+      chunkFreq.set(word, (chunkFreq.get(word) || 0) + 1);
     }
 
-    // If no exact matches, try partial matching (substring)
-    if (intersection === 0) {
-      for (const qWord of queryWords) {
-        for (const cWord of chunkWords) {
-          // Partial match: if query word is contained in chunk word or vice versa
+    let score = 0;
+    let matchedWords = 0;
+
+    // Score each query word
+    for (const qWord of queryWords) {
+      // Exact match - high priority
+      if (chunkFreq.has(qWord)) {
+        score += 2.0; // Exact match worth 2 points
+        matchedWords++;
+      } else {
+        // Partial match - lower priority
+        for (const [cWord] of chunkFreq) {
           if (qWord.length > 2 && cWord.length > 2) {
+            // Give higher score for longer shared substrings
             if (qWord.includes(cWord) || cWord.includes(qWord)) {
-              intersection += 0.5; // Count as half match
+              const sharedLength = Math.min(qWord.length, cWord.length);
+              score += Math.max(0.3, sharedLength / qWord.length); // At least 0.3, up to 1.0
+              matchedWords++;
+              break; // Only match once per query word
             }
           }
         }
       }
     }
 
-    // Normalize by query length (cosine-like similarity)
-    // This is more forgiving than Jaccard
-    return Math.min(intersection / Math.max(querySet.size, chunkSet.size), 1.0);
+    // Normalize: score based on percentage of matched query words
+    // Plus a bonus for chunk quality (having many relevant words)
+    const matchRatio = matchedWords / queryWords.length;
+    const baseScore = Math.min(score / (2.0 * queryWords.length), 1.0);
+
+    // If we have matches, return the base score
+    // Otherwise return 0 (no fallback here, we'll handle in search())
+    return matchRatio > 0 ? Math.max(baseScore, matchRatio * 0.5) : 0;
   }
 }
