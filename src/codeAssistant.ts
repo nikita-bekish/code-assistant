@@ -37,11 +37,16 @@ export class CodeAssistant {
       try {
         const chunkData = await fs.readFile(indexPath, 'utf-8');
         chunks = JSON.parse(chunkData);
-      } catch {
+      } catch (error) {
         console.log('Index not found. Creating index...');
-        await this.indexer.indexProject();
-        const chunkData = await fs.readFile(indexPath, 'utf-8');
-        chunks = JSON.parse(chunkData);
+        try {
+          await this.indexer.indexProject();
+          const chunkData = await fs.readFile(indexPath, 'utf-8');
+          chunks = JSON.parse(chunkData);
+        } catch (indexError) {
+          const indexErrorMsg = indexError instanceof Error ? indexError.message : String(indexError);
+          throw new Error(`Failed to create index: ${indexErrorMsg}`);
+        }
       }
 
       // Set chunks in RAG

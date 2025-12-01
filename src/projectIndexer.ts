@@ -29,6 +29,14 @@ export class ProjectIndexer {
       }
     }
 
+    // Check if any files were indexed
+    if (this.files.length === 0) {
+      throw new Error(
+        `No files were indexed. Check includeFolders: ${this.config.indexing.includeFolders.join(', ')} ` +
+        `and includeFileTypes: ${this.config.indexing.includeFileTypes.join(', ')}`
+      );
+    }
+
     // Create chunks from indexed files
     this._createChunks();
 
@@ -220,7 +228,8 @@ export class ProjectIndexer {
 
       console.log(`Index saved to ${outputDir}`);
     } catch (error) {
-      console.error('Failed to save index:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to save index to ${outputDir}: ${errorMessage}`);
     }
   }
 }
