@@ -92,7 +92,7 @@ Please provide a detailed answer based on the provided context. Always cite your
     const querySet = new Set(queryWords);
     const chunkSet = new Set(chunkWords);
 
-    // Calculate Jaccard similarity
+    // Calculate token overlap - count matching words
     let intersection = 0;
     for (const word of querySet) {
       if (chunkSet.has(word)) {
@@ -100,7 +100,22 @@ Please provide a detailed answer based on the provided context. Always cite your
       }
     }
 
-    const union = querySet.size + chunkSet.size - intersection;
-    return intersection / union;
+    // If no exact matches, try partial matching (substring)
+    if (intersection === 0) {
+      for (const qWord of queryWords) {
+        for (const cWord of chunkWords) {
+          // Partial match: if query word is contained in chunk word or vice versa
+          if (qWord.length > 2 && cWord.length > 2) {
+            if (qWord.includes(cWord) || cWord.includes(qWord)) {
+              intersection += 0.5; // Count as half match
+            }
+          }
+        }
+      }
+    }
+
+    // Normalize by query length (cosine-like similarity)
+    // This is more forgiving than Jaccard
+    return Math.min(intersection / Math.max(querySet.size, chunkSet.size), 1.0);
   }
 }
