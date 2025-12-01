@@ -84,9 +84,27 @@ Please provide a detailed answer based on the provided context. Always cite your
   }
 
   private _tokenize(text: string): string[] {
-    return text
+    // Common stop words to filter out
+    const stopWords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'be', 'been',
+      'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+      'should', 'could', 'can', 'may', 'might', 'must', 'shall', 'this',
+      'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
+      'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each',
+      'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no',
+      'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
+      'import', 'export', 'from', 'default', 'function', 'class', 'const',
+      'let', 'var', 'return', 'if', 'else', 'try', 'catch', 'throw', 'new',
+      'async', 'await', 'promise', 'error', 'console', 'log', 'json', 'parse'
+    ]);
+
+    const tokens = text
       .toLowerCase()
       .match(/\b\w+\b/g) || [];
+
+    // Filter out stop words and very short tokens
+    return tokens.filter(token => !stopWords.has(token) && token.length > 2);
   }
 
   private _calculateSimilarity(queryWords: string[], chunkWords: string[]): number {
