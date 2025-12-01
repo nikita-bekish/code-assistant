@@ -191,13 +191,25 @@ export class CodeAssistant {
   }
 
   private _extractKeywords(sources: SearchResult[]): string[] {
+    const stopWords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'be', 'been',
+      'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+      'should', 'could', 'can', 'may', 'might', 'must', 'shall', 'this',
+      'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
+      'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each',
+      'import', 'export', 'from', 'default', 'function', 'class', 'const',
+      'let', 'var', 'return', 'if', 'else', 'try', 'catch', 'throw', 'new'
+    ]);
+
     const keywords = new Set<string>();
 
     for (const source of sources) {
       const words = source.content
+        .toLowerCase()
         .split(/\s+/)
-        .filter((w: string) => w.length > 3)
-        .slice(0, 3);
+        .filter((w: string) => w.length > 3 && !stopWords.has(w))
+        .slice(0, 5);
       words.forEach((w: string) => keywords.add(w));
     }
 
