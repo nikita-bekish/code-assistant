@@ -26,11 +26,16 @@ export class RAGPipeline {
 
     for (const chunk of this.chunks) {
       const chunkWords = this._tokenize(chunk.content);
-      const score = this._calculateSimilarity(queryWords, chunkWords);
+      let score = this._calculateSimilarity(queryWords, chunkWords);
 
-      if (score > 0) {
-        scores.push({ chunk, score });
+      // If no match found, give a minimal score based on chunk quality
+      // This enables cross-language search to still return results
+      if (score === 0) {
+        // Prefer chunks with more words (likely more informative)
+        score = Math.min(chunkWords.length / 1000, 0.1);
       }
+
+      scores.push({ chunk, score });
     }
 
     // Sort by score descending
