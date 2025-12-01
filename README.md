@@ -1,85 +1,85 @@
-# My Code Assistant
+# My Code Assistant - Персональный ассистент для кода
 
-A universal code assistant framework that can be integrated into **any project**. It uses RAG (Retrieval Augmented Generation) to understand your codebase and help you navigate, understand, and develop features faster.
+Универсальный framework для создания кодового ассистента, который можно интегрировать в **любой проект**. Использует RAG (Retrieval Augmented Generation) для понимания вашего кода и помощи в навигации, анализе и разработке новых функций.
 
-## 🎯 What It Does
+## 🎯 Что это делает
 
 My Code Assistant:
-- **Indexes** your codebase and documentation
-- **Understands** your project structure through git
-- **Answers** questions about your code with citations
-- **Helps** with understanding architecture, debugging, and implementing features
-- **Works** with any language or project type
+- **Индексирует** исходный код и документацию вашего проекта
+- **Понимает** структуру проекта через git
+- **Отвечает** на вопросы о коде с цитатами источников
+- **Помогает** разобраться с архитектурой, отладкой и реализацией функций
+- **Работает** с любым языком программирования и типом проекта
 
-## 🚀 Quick Start
+## 🚀 Быстрый старт
 
 ```bash
-# Install globally
+# Установка глобально
 npm install -g my-code-assistant
 
-# Initialize in your project
+# Инициализация в вашем проекте
 cd your-project
 mca init
 
-# Index your code
+# Индексирование кода
 mca index
 
-# Start chatting!
+# Запуск чата!
 mca chat
 ```
 
-## 💡 Example Usage
+## 💡 Пример использования
 
 ```
-You: How does authentication work in this project?
-Assistant: Authentication uses JWT tokens stored in httpOnly cookies:
-  [1] src/auth/jwtService.ts - JWT generation and validation
-  [2] src/middleware/auth.ts - Route protection middleware
-  [3] src/api/login.ts - Login endpoint implementation
+You: Как работает аутентификация в этом проекте?
+Assistant: Аутентификация использует JWT токены в httpOnly cookies:
+  [1] src/auth/jwtService.ts - Создание и проверка JWT
+  [2] src/middleware/auth.ts - Middleware для защиты маршрутов
+  [3] src/api/login.ts - Endpoint входа
 Confidence: 92%
 
-You: Where's the database schema?
-Assistant: Database models are in src/models/:
-  [1] src/models/User.ts - User model with validation
-  [2] src/models/Message.ts - Message storage structure
-  [3] src/models/index.ts - Database configuration
+You: Где находится схема базы данных?
+Assistant: Модели БД находятся в src/models/:
+  [1] src/models/User.ts - Модель пользователя с валидацией
+  [2] src/models/Message.ts - Структура сообщений
+  [3] src/models/index.ts - Конфигурация БД
 Confidence: 88%
 ```
 
-## ✨ Features
+## ✨ Возможности
 
-### Core Features
-- ✅ **Code Indexing** - Automatically index any codebase
-- ✅ **RAG Search** - Find relevant code chunks by semantic similarity
-- ✅ **Git Integration** - Understand project history and branches
-- ✅ **Interactive Chat** - Ask questions, get answers with sources
-- ✅ **Project Context** - Automatic project structure detection
+### Основные функции
+- ✅ **Индексирование кода** - Автоматическое индексирование любого проекта
+- ✅ **RAG поиск** - Поиск релевантных фрагментов кода по семантике
+- ✅ **Интеграция с Git** - Понимание истории проекта и ветвей
+- ✅ **Интерактивный чат** - Вопросы и ответы с указанием источников
+- ✅ **Контекст проекта** - Автоматическое определение структуры
 
-### Chat Commands
-- `/help` - Show available commands
-- `/git` - View git status and recent commits
-- `/history` - See conversation history
-- `/context` - View project information
-- `/clear` - Clear conversation
-- `/exit` - Exit the chat
+### Команды чата
+- `/help` - Доступные команды
+- `/git` - Статус git и последние коммиты
+- `/history` - История разговора
+- `/context` - Информация о проекте
+- `/clear` - Очистить разговор
+- `/exit` - Выход из чата
 
-### Configuration
-- **Universal** - Works with any language (TypeScript, Python, Go, etc.)
-- **Flexible** - Choose what to index (folders, file types)
-- **Configurable** - Customize via `projectConfig.json`
-- **Templates** - Pre-built configs for common project types
+### Конфигурация
+- **Универсальность** - Работает с любым языком (TypeScript, Python, Go и т.д.)
+- **Гибкость** - Выбирайте, что индексировать (папки, типы файлов)
+- **Настраиваемость** - Через `projectConfig.json`
+- **Шаблоны** - Готовые конфигурации для популярных типов проектов
 
-## 📋 Project Types
+## 📋 Типы проектов
 
-Pre-configured templates for:
-- Default projects
-- Web applications (React, Vue, Angular)
-- Backend services (Node, Python, Java)
-- Monorepos (Lerna, Turborepo, pnpm)
+Готовые шаблоны конфигураций для:
+- Обычных проектов
+- Веб-приложений (React, Vue, Angular)
+- Backend сервисов (Node, Python, Java)
+- Monorepo (Lerna, Turborepo, pnpm)
 
-## 🛠️ Installation Options
+## 🛠️ Способы установки
 
-### Option 1: Global Installation
+### Способ 1: Глобальная установка
 
 ```bash
 npm install -g my-code-assistant
@@ -88,7 +88,7 @@ mca index
 mca chat
 ```
 
-### Option 2: Local Installation
+### Способ 2: Локальная установка в проект
 
 ```bash
 npm install my-code-assistant --save-dev
@@ -97,7 +97,7 @@ npx mca index
 npx mca chat
 ```
 
-### Option 3: As a Library
+### Способ 3: Как библиотека
 
 ```bash
 npm install my-code-assistant
@@ -109,58 +109,58 @@ import { CodeAssistant } from 'my-code-assistant';
 const config = { /* ... */ };
 const assistant = new CodeAssistant(config);
 await assistant.initialize();
-const answer = await assistant.ask('How does auth work?');
+const answer = await assistant.ask('Как работает аутентификация?');
 ```
 
-## 📚 Documentation
+## 📚 Документация
 
-- [**SETUP.md**](./docs/SETUP.md) - Installation and quick start
-- [**CONFIG.md**](./docs/CONFIG.md) - Configuration options and templates
-- [**ARCHITECTURE.md**](./docs/ARCHITECTURE.md) - Technical architecture
-- [**EXAMPLES.md**](./docs/EXAMPLES.md) - Real-world usage examples
-- [**API.md**](./docs/API.md) - TypeScript API reference
+- [**SETUP.md**](./docs/SETUP.md) - Установка и быстрый старт
+- [**CONFIG.md**](./docs/CONFIG.md) - Параметры конфигурации и шаблоны
+- [**ARCHITECTURE.md**](./docs/ARCHITECTURE.md) - Техническая архитектура
+- [**EXAMPLES.md**](./docs/EXAMPLES.md) - Примеры использования
+- [**API.md**](./docs/API.md) - Справочник TypeScript API
 
-## 🏗️ Architecture
+## 🏗️ Архитектура
 
 ```
 ┌─────────────────────────────────┐
-│      ChatBotCLI (CLI UI)       │
+│      ChatBotCLI (Интерфейс)    │
 └──────────────────┬──────────────┘
                    │
         ┌──────────┴──────────┐
         │                     │
     ┌───▼────────┐    ┌──────▼────┐
-    │  CodeAss.  │    │ RAGQuery  │
+    │CodeAss.    │    │ RAGSearch │
     └───┬────────┘    └──────┬────┘
         │                    │
     ┌───┴───────────────────┴────┐
     │                            │
  ┌──▼────────┐   ┌──────────┐   │
- │  Indexer  │   │Git Helper│   │
+ │ Индексер  │   │Git Helper│   │
  └───────────┘   └──────────┘   │
                                 │
               ┌─────────────────┴───┐
               │                     │
          ┌────▼────┐           ┌───▼──┐
-         │Chunks   │           │Cache │
+         │ Chunks  │           │ Cache│
          └─────────┘           └──────┘
 ```
 
-## 🔄 Workflow
+## 🔄 Процесс работы
 
-1. **Initialize** - `mca init` creates `projectConfig.json`
-2. **Index** - `mca index` reads and chunks your code
-3. **Chat** - `mca chat` starts interactive assistant
-4. **Ask** - Type questions, get answers with sources
+1. **Инициализация** - `mca init` создаёт `projectConfig.json`
+2. **Индексирование** - `mca index` читает и разбивает код на блоки
+3. **Чат** - `mca chat` запускает интерактивный ассистент
+4. **Вопросы** - Задавайте вопросы, получайте ответы с источниками
 
-## ⚙️ Configuration
+## ⚙️ Конфигурация
 
-Create `projectConfig.json`:
+Создайте `projectConfig.json`:
 
 ```json
 {
-  "projectName": "my-project",
-  "projectDescription": "My awesome project",
+  "projectName": "мой-проект",
+  "projectDescription": "Описание моего проекта",
 
   "paths": {
     "root": ".",
@@ -193,151 +193,151 @@ Create `projectConfig.json`:
   },
 
   "prompt": {
-    "system": "You are a code assistant for {projectName}. Help developers understand the codebase...",
-    "language": "en"
+    "system": "Ты помощник для {projectName}. Помогай разработчикам понимать код...",
+    "language": "ru"
   }
 }
 ```
 
-Or use templates:
+Или используйте шаблоны:
 
 ```bash
-cp templates/config-web.json projectConfig.json     # Web apps
+cp templates/config-web.json projectConfig.json     # Веб-приложения
 cp templates/config-backend.json projectConfig.json # Backend
-cp templates/config-monorepo.json projectConfig.json # Monorepos
+cp templates/config-monorepo.json projectConfig.json # Monorepo
 ```
 
-## 🎬 Real-World Examples
+## 🎬 Примеры использования
 
-### Understanding Architecture
+### Понимание архитектуры
 ```
-You: What's the overall architecture?
-Assistant: [explains with 3-5 source citations]
-```
-
-### Debugging
-```
-You: Why does auth fail sometimes?
-Assistant: [identifies issue with specific file references]
+You: Какая архитектура у этого проекта?
+Assistant: [объясняет с 3-5 источниками]
 ```
 
-### Implementation Help
+### Отладка
 ```
-You: How do I add email notifications?
-Assistant: [guides through existing patterns and files]
+You: Почему иногда падает аутентификация?
+Assistant: [определяет проблему с конкретными файлами]
 ```
 
-See [EXAMPLES.md](./docs/EXAMPLES.md) for more scenarios.
+### Помощь с реализацией
+```
+You: Как добавить email уведомления?
+Assistant: [направляет через существующие паттерны]
+```
 
-## 🔧 Technology Stack
+Подробнее см. [EXAMPLES.md](./docs/EXAMPLES.md).
 
-- **TypeScript** - Type-safe implementation
-- **LangChain** - RAG and LLM integration (optional)
-- **Ollama** - Local LLM backend (optional, recommended)
-- **Chalk** - Colored terminal output
-- **Inquirer** - Interactive CLI prompts
+## 🔧 Используемые технологии
 
-## 📦 What's Included
+- **TypeScript** - Типобезопасная реализация
+- **LangChain** - RAG и LLM интеграция (опционально)
+- **Ollama** - Локальный LLM сервер (опционально, рекомендуется)
+- **Chalk** - Цветной вывод в терминал
+- **Inquirer** - Интерактивные подсказки CLI
+
+## 📦 Что включено
 
 ```
 my-code-assistant/
-├── src/                          # Source code
-│   ├── types/                   # TypeScript interfaces
-│   ├── rag/                     # RAG pipeline & conversation
-│   ├── projectIndexer.ts        # Code indexing
-│   ├── gitHelper.ts             # Git integration
-│   ├── codeAssistant.ts         # Main orchestrator
-│   ├── chatbot.ts               # CLI interface
-│   └── index.ts                 # Exports
-├── bin/cli.js                   # CLI entry point
-├── templates/                   # Config templates
-├── docs/                        # Documentation
+├── src/                          # Исходный код
+│   ├── types/                   # TypeScript интерфейсы
+│   ├── rag/                     # RAG pipeline и conversation
+│   ├── projectIndexer.ts        # Индексирование кода
+│   ├── gitHelper.ts             # Интеграция с Git
+│   ├── codeAssistant.ts         # Главный оркестратор
+│   ├── chatbot.ts               # CLI интерфейс
+│   └── index.ts                 # Экспорты
+├── bin/cli.js                   # Точка входа CLI
+├── templates/                   # Шаблоны конфигов
+├── docs/                        # Документация
 ├── package.json
 ├── tsconfig.json
 └── README.md
 ```
 
-## 🎯 Use Cases
+## 🎯 Случаи использования
 
-1. **Onboarding** - New developer understanding codebase
-2. **Navigation** - Finding relevant files and features
-3. **Debugging** - Understanding error flows and root causes
-4. **Documentation** - Generating docs from code
-5. **Refactoring** - Understanding impact of changes
-6. **Feature Development** - Finding where to add new code
-7. **Code Review** - Understanding what reviewer is seeing
+1. **Онбординг** - Новый разработчик изучает кодовую базу
+2. **Навигация** - Поиск релевантных файлов и функций
+3. **Отладка** - Понимание потоков ошибок и корневых причин
+4. **Документация** - Генерирование docs из кода
+5. **Рефакторинг** - Понимание влияния изменений
+6. **Разработка функций** - Поиск где добавить новый код
+7. **Code review** - Понимание что видит рецензент
 
-## 🚦 Requirements
+## 🚦 Требования
 
 - Node.js 18+
-- npm or yarn
-- Git repository (optional but recommended)
-- Ollama or other LLM (for actual LLM responses)
+- npm или yarn
+- Git репозиторий (опционально, но рекомендуется)
+- Ollama или другой LLM (для реальных LLM ответов)
 
-## 🔄 Upcoming Features
+## 🔄 Планируемые функции
 
-- Semantic search with embeddings
-- Web UI for management
-- Watch mode for auto-reindexing
-- Database backend for large projects
-- Real LLM integration
-- Multi-language support
-- Plugin system
-- Distributed indexing
+- Семантический поиск с embeddings
+- Веб интерфейс для управления
+- Watch mode для автоматического перестроения индекса
+- Database backend для больших проектов
+- Интеграция с реальными LLM
+- Поддержка нескольких языков
+- Система плагинов
+- Распределённое индексирование
 
-## 💬 Chat Commands
+## 💬 Команды чата
 
 ```
-/help      - Show available commands
-/git       - Git status and recent commits
-/history   - Conversation history
-/context   - Project information
-/clear     - Clear conversation
-/exit      - Exit chat
+/help      - Показать доступные команды
+/git       - Статус Git и последние коммиты
+/history   - История разговора
+/context   - Информация о проекте
+/clear     - Очистить разговор
+/exit      - Выход из чата
 ```
 
-## 🐛 Troubleshooting
+## 🐛 Решение проблем
 
-### "projectConfig.json not found"
-Run `mca init` first to create the configuration.
+### "projectConfig.json не найден"
+Запустите `mca init` для создания конфигурации.
 
-### "No chunks found"
-Run `mca index` after initialization.
+### "Chunks не найдены"
+Запустите `mca index` после инициализации.
 
-### Poor search results
-- Increase `maxResults` in LLM config
-- Adjust `chunkSize` (try 200-600 words)
-- Improve `system` prompt with domain knowledge
+### Плохие результаты поиска
+- Увеличьте `maxResults` в LLM конфиге
+- Отрегулируйте `chunkSize` (попробуйте 200-600 слов)
+- Улучшите системный `prompt` с доменными знаниями
 
-### Chat doesn't respond
-- Ensure `indexing.includeFolders` contains files
-- Check that `indexing.includeFileTypes` matches your files
-- Verify Ollama is running (if using local LLM)
+### Чат не отвечает
+- Убедитесь что `indexing.includeFolders` содержит файлы
+- Проверьте что `indexing.includeFileTypes` соответствует вашим файлам
+- Проверьте что Ollama запущен (если используете локальный LLM)
 
-## 📄 License
+## 📄 Лицензия
 
 MIT
 
-## 🤝 Contributing
+## 🤝 Внесение вклада
 
-Contributions welcome! See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for technical details.
+Вклады приветствуются! Подробнее см. [ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
-## 📞 Support
+## 📞 Поддержка
 
-- Check [documentation](./docs/)
-- Review [examples](./docs/EXAMPLES.md)
-- Read [API reference](./docs/API.md)
+- Проверьте [документацию](./docs/)
+- Изучите [примеры](./docs/EXAMPLES.md)
+- Читайте [API справочник](./docs/API.md)
 
-## 🎓 Learning Resources
+## 🎓 Учебные ресурсы
 
-- **Architecture** - [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
-- **Setup** - [SETUP.md](./docs/SETUP.md)
-- **Configuration** - [CONFIG.md](./docs/CONFIG.md)
-- **Examples** - [EXAMPLES.md](./docs/EXAMPLES.md)
+- **Архитектура** - [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- **Установка** - [SETUP.md](./docs/SETUP.md)
+- **Конфигурация** - [CONFIG.md](./docs/CONFIG.md)
+- **Примеры** - [EXAMPLES.md](./docs/EXAMPLES.md)
 - **API** - [API.md](./docs/API.md)
 
 ---
 
-**Happy coding! 🚀**
+**Счастливого кодирования! 🚀**
 
-Built with ❤️ for developers who want to understand their code better.
+Создано с ❤️ для разработчиков, которые хотят лучше понимать свой код.
