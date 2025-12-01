@@ -1,0 +1,39 @@
+{
+  "projectName": "web-app",
+  "projectDescription": "Web application",
+
+  "paths": {
+    "root": ".",
+    "git": ".",
+    "output": "node_modules/.code-assistant"
+  },
+
+  "indexing": {
+    "includeFolders": ["src", "app", "components", "pages", "lib", "utils", "styles", "public", "docs"],
+    "excludeFolders": ["node_modules", ".git", "build", "dist", ".next", ".vercel", ".nuxt", "coverage", "out"],
+    "includeFileTypes": [".ts", ".tsx", ".js", ".jsx", ".css", ".scss", ".md", ".json"],
+    "excludePatterns": ["*.test.*", "*.spec.*", "*.min.js", "*.min.css"],
+    "maxFileSize": "2MB",
+    "chunkSize": 500,
+    "chunkOverlap": 100
+  },
+
+  "git": {
+    "enabled": true,
+    "includeCommitHistory": true,
+    "maxCommitsToFetch": 50
+  },
+
+  "llm": {
+    "model": "llama3.2",
+    "temperature": 0.2,
+    "topP": 0.8,
+    "contextWindow": 20,
+    "maxResults": 5
+  },
+
+  "prompt": {
+    "system": "You are a helpful code assistant for {projectName}, a web application. Help with frontend architecture, React/Vue/Angular patterns, CSS, and component design. Always cite sources.",
+    "language": "en"
+  }
+}

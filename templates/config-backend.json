@@ -1,0 +1,39 @@
+{
+  "projectName": "backend-service",
+  "projectDescription": "Backend service",
+
+  "paths": {
+    "root": ".",
+    "git": ".",
+    "output": "node_modules/.code-assistant"
+  },
+
+  "indexing": {
+    "includeFolders": ["src", "api", "services", "models", "middleware", "routes", "utils", "config", "tests", "docs"],
+    "excludeFolders": ["node_modules", ".git", "build", "dist", "coverage", "logs", "tmp", "__pycache__"],
+    "includeFileTypes": [".ts", ".js", ".py", ".java", ".go", ".md", ".json", ".sql"],
+    "excludePatterns": ["*.test.*", "*.spec.*", "*.min.js"],
+    "maxFileSize": "2MB",
+    "chunkSize": 500,
+    "chunkOverlap": 100
+  },
+
+  "git": {
+    "enabled": true,
+    "includeCommitHistory": true,
+    "maxCommitsToFetch": 50
+  },
+
+  "llm": {
+    "model": "llama3.2",
+    "temperature": 0.2,
+    "topP": 0.8,
+    "contextWindow": 20,
+    "maxResults": 5
+  },
+
+  "prompt": {
+    "system": "You are a helpful code assistant for {projectName}, a backend service. Help with API design, database schemas, authentication, business logic, and system architecture. Always cite sources.",
+    "language": "en"
+  }
+}

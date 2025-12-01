@@ -1,0 +1,39 @@
+{
+  "projectName": "my-project",
+  "projectDescription": "My project",
+
+  "paths": {
+    "root": ".",
+    "git": ".",
+    "output": "node_modules/.code-assistant"
+  },
+
+  "indexing": {
+    "includeFolders": ["src", "lib"],
+    "excludeFolders": ["node_modules", ".git", "build", "dist", ".next", "venv", "__pycache__"],
+    "includeFileTypes": [".ts", ".tsx", ".js", ".jsx", ".md", ".json", ".py", ".java", ".go"],
+    "excludePatterns": ["*.test.*", "*.spec.*", "*.min.js", "*.min.css"],
+    "maxFileSize": "1MB",
+    "chunkSize": 400,
+    "chunkOverlap": 100
+  },
+
+  "git": {
+    "enabled": true,
+    "includeCommitHistory": true,
+    "maxCommitsToFetch": 50
+  },
+
+  "llm": {
+    "model": "llama3.2",
+    "temperature": 0.2,
+    "topP": 0.8,
+    "contextWindow": 20,
+    "maxResults": 5
+  },
+
+  "prompt": {
+    "system": "You are a helpful code assistant for {projectName}. Help developers understand the codebase, explain architecture, suggest implementations. Always cite sources.",
+    "language": "en"
+  }
+}

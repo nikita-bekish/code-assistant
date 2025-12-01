@@ -1,0 +1,39 @@
+{
+  "projectName": "monorepo-project",
+  "projectDescription": "Monorepo with multiple packages",
+
+  "paths": {
+    "root": ".",
+    "git": ".",
+    "output": "node_modules/.code-assistant"
+  },
+
+  "indexing": {
+    "includeFolders": ["packages", "apps", "libs", "shared", "tools", "scripts", "docs"],
+    "excludeFolders": ["node_modules", ".git", "build", "dist", ".next", "coverage", ".turbo", ".pnpm"],
+    "includeFileTypes": [".ts", ".tsx", ".js", ".jsx", ".json", ".md"],
+    "excludePatterns": ["*.test.*", "*.spec.*", "*.min.js"],
+    "maxFileSize": "2MB",
+    "chunkSize": 500,
+    "chunkOverlap": 100
+  },
+
+  "git": {
+    "enabled": true,
+    "includeCommitHistory": true,
+    "maxCommitsToFetch": 50
+  },
+
+  "llm": {
+    "model": "llama3.2",
+    "temperature": 0.2,
+    "topP": 0.8,
+    "contextWindow": 20,
+    "maxResults": 5
+  },
+
+  "prompt": {
+    "system": "You are a helpful code assistant for {projectName}, a monorepo project. Help with package structure, cross-package dependencies, shared utilities, and workspace organization. Always cite sources.",
+    "language": "en"
+  }
+}
