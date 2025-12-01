@@ -23,6 +23,7 @@
   "author": "My Code Assistant",
   "license": "MIT",
   "dependencies": {
+    "@langchain/ollama": "^1.0.2",
     "chalk": "^5.3.0",
     "inquirer": "^9.2.11",
     "langchain": "^0.1.0",

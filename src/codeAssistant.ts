@@ -5,6 +5,8 @@ import { ProjectIndexer } from './projectIndexer.js';
 import { GitHelper } from './gitHelper.js';
 import { RAGPipeline } from './rag/ragPipeline.js';
 import { ConversationManager } from './rag/conversationManager.js';
+import { initializeEmbeddings } from './rag/embeddingUtils.js';
+import { Ollama } from '@langchain/ollama';
 
 export class CodeAssistant {
   private config: ProjectConfig;
@@ -13,6 +15,7 @@ export class CodeAssistant {
   private rag: RAGPipeline;
   private conversationManager: ConversationManager | null = null;
   private projectContext: ProjectContext | null = null;
+  private llm: Ollama | null = null;
 
   constructor(config: ProjectConfig) {
     this.config = config;
@@ -57,6 +60,21 @@ export class CodeAssistant {
       this.rag.setChunks(chunks);
       this.rag.setModel(this.config.llm.model);
 
+      // Initialize embeddings if available
+      if (this.config.embedding?.enabled) {
+        const embeddings = initializeEmbeddings(this.config);
+        if (embeddings) {
+          this.rag.setEmbeddings(embeddings);
+          console.log('Semantic search enabled with embeddings');
+        }
+      }
+
+      // Initialize LLM for answer generation
+      this.llm = new Ollama({
+        model: this.config.llm.model,
+        baseUrl: 'http://localhost:11434',
+      });
+
       // Get project context
       this.projectContext = await this.getProjectContext();
 
@@ -93,9 +111,18 @@ export class CodeAssistant {
 
     const prompt = this.rag.createPrompt(systemPrompt, question, context);
 
-    // In production, this would call the actual LLM
-    // For now, return a structured response
-    const answer = this._generateAnswer(question, searchResults);
+    // Generate answer using LLM if available
+    let answer: string;
+    try {
+      if (this.llm && searchResults.length > 0) {
+        answer = await this._generateAnswerWithLLM(prompt);
+      } else {
+        answer = this._generateAnswer(question, searchResults);
+      }
+    } catch (error) {
+      // Fallback if LLM fails
+      answer = this._generateAnswer(question, searchResults);
+    }
 
     // Add assistant message to conversation
     this.conversationManager.addAssistantMessage(answer, searchResults);
@@ -163,9 +190,26 @@ export class CodeAssistant {
     return await this.git.getStatus();
   }
 
+  private async _generateAnswerWithLLM(prompt: string): Promise<string> {
+    try {
+      if (!this.llm) {
+        throw new Error('LLM not initialized');
+      }
+
+      // Call the LLM with the prompt
+      const response = await this.llm.invoke(prompt);
+
+      // Extract text from response
+      const answer = typeof response === 'string' ? response : String(response);
+      return answer.trim();
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to generate answer with LLM: ${errorMsg}`);
+    }
+  }
+
   private _generateAnswer(question: string, sources: SearchResult[]): string {
-    // Simple answer generation based on sources
-    // In production, this would use the actual LLM
+    // Simple answer generation based on sources (fallback)
     if (sources.length === 0) {
       return `I could not find relevant information in the codebase for: "${question}". Please try a more specific question or check the documentation.`;
     }

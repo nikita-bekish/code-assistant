@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { ProjectConfig, IndexedFile, TextChunk, IndexStats } from './types/index.js';
+import { generateChunkEmbeddings } from './rag/embeddingUtils.js';
 
 export class ProjectIndexer {
   private config: ProjectConfig;
@@ -228,9 +229,16 @@ export class ProjectIndexer {
     try {
       await fs.mkdir(outputDir, { recursive: true });
 
+      // Generate embeddings if enabled
+      let chunksToSave = this.chunks;
+      if (this.config.embedding?.enabled) {
+        console.log('Generating embeddings for chunks...');
+        chunksToSave = await generateChunkEmbeddings(this.chunks, this.config);
+      }
+
       // Save chunks
       const chunksPath = path.join(outputDir, 'chunks.json');
-      await fs.writeFile(chunksPath, JSON.stringify(this.chunks, null, 2));
+      await fs.writeFile(chunksPath, JSON.stringify(chunksToSave, null, 2));
 
       // Save stats
       const statsPath = path.join(outputDir, 'stats.json');

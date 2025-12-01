@@ -38,6 +38,13 @@ export interface ProjectConfig {
     language: string;
   };
 
+  embedding?: {
+    enabled: boolean;
+    model: string;
+    provider: 'ollama';
+    baseUrl?: string;
+  };
+
   mcp?: {
     enabled: boolean;
     port: number;
@@ -59,6 +66,7 @@ export interface IndexedFile {
 export interface TextChunk {
   id: string;
   content: string;
+  embedding?: number[];
   metadata: {
     source: string;
     chunkIndex: number;
