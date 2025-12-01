@@ -7,6 +7,7 @@ import { RAGPipeline } from './rag/ragPipeline.js';
 import { ConversationManager } from './rag/conversationManager.js';
 import { initializeEmbeddings } from './rag/embeddingUtils.js';
 import { Ollama } from '@langchain/ollama';
+import { GitMCPServer } from './mcp/gitServer.js';
 
 export class CodeAssistant {
   private config: ProjectConfig;
@@ -16,6 +17,7 @@ export class CodeAssistant {
   private conversationManager: ConversationManager | null = null;
   private projectContext: ProjectContext | null = null;
   private llm: Ollama | null = null;
+  private mcpServer: GitMCPServer | null = null;
 
   constructor(config: ProjectConfig) {
     this.config = config;
@@ -74,6 +76,9 @@ export class CodeAssistant {
         model: this.config.llm.model,
         baseUrl: 'http://localhost:11434',
       });
+
+      // Initialize MCP server for git integration
+      this.mcpServer = new GitMCPServer(this.config.paths.git, 3001);
 
       // Get project context
       this.projectContext = await this.getProjectContext();
@@ -180,6 +185,25 @@ export class CodeAssistant {
   clearConversation(): void {
     if (this.conversationManager && this.projectContext) {
       this.conversationManager.clear();
+    }
+  }
+
+  /**
+   * Start MCP server for git tools
+   */
+  async startMCPServer(): Promise<void> {
+    if (!this.mcpServer) {
+      throw new Error('MCP Server not initialized');
+    }
+    await this.mcpServer.start();
+  }
+
+  /**
+   * Stop MCP server
+   */
+  async stopMCPServer(): Promise<void> {
+    if (this.mcpServer) {
+      await this.mcpServer.stop();
     }
   }
 
