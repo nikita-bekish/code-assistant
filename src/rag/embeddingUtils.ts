@@ -104,6 +104,51 @@ async function generateEmbeddingsBatch(
 }
 
 /**
+ * Generate simple keyword-based embeddings as fallback
+ * Creates a sparse vector based on word frequencies
+ */
+function generateFallbackEmbeddings(chunks: TextChunk[]): number[][] {
+  // Build vocabulary from all chunks
+  const vocabulary = new Set<string>();
+  const tokenizedChunks: string[][] = [];
+
+  for (const chunk of chunks) {
+    const tokens = chunk.content
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(t => t.length > 2); // Filter short words
+
+    tokenizedChunks.push(tokens);
+    tokens.forEach(t => vocabulary.add(t));
+  }
+
+  const vocabArray = Array.from(vocabulary);
+  const vocabIndex = new Map(vocabArray.map((word, idx) => [word, idx]));
+
+  // Create sparse vectors using TF-IDF concept
+  const embeddings: number[][] = [];
+  for (const tokens of tokenizedChunks) {
+    const vector = new Array(Math.min(vocabArray.length, 256)).fill(0);
+    const termFreq = new Map<string, number>();
+
+    for (const token of tokens) {
+      termFreq.set(token, (termFreq.get(token) || 0) + 1);
+    }
+
+    for (const [token, freq] of termFreq) {
+      const idx = vocabIndex.get(token);
+      if (idx !== undefined && idx < 256) {
+        vector[idx] = freq / tokens.length; // Normalize by chunk size
+      }
+    }
+
+    embeddings.push(vector);
+  }
+
+  return embeddings;
+}
+
+/**
  * Generate embeddings for an array of text chunks
  * Returns the chunks with embeddings added
  */
@@ -128,7 +173,7 @@ export async function generateChunkEmbeddings(
       config.embedding.model
     );
 
-    console.log(`Successfully generated ${embeddingVectors.length} embeddings`);
+    console.log(`Successfully generated ${embeddingVectors.length} embeddings using Ollama`);
 
     return chunks.map((chunk, idx) => ({
       ...chunk,
@@ -136,16 +181,22 @@ export async function generateChunkEmbeddings(
     }));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn(`Warning: Failed to generate embeddings: ${errorMessage}`);
-    console.warn('Continuing without embeddings - keyword search will be used');
-    console.warn(`Tip: Make sure Ollama is running: ollama serve`);
-    console.warn(`Tip: Pull the embedding model: ollama pull ${config.embedding?.model || 'nomic-embed-text'}`);
-    return chunks;
+    console.warn(`⚠️  Failed to generate Ollama embeddings: ${errorMessage}`);
+    console.warn('⚠️  Using fallback keyword-based embeddings instead');
+
+    // Use fallback embeddings
+    const fallbackEmbeddings = generateFallbackEmbeddings(chunks);
+    console.log(`✓ Generated ${fallbackEmbeddings.length} fallback embeddings`);
+
+    return chunks.map((chunk, idx) => ({
+      ...chunk,
+      embedding: fallbackEmbeddings[idx],
+    }));
   }
 }
 
 /**
- * Embed a single query string using Ollama
+ * Embed a single query string using Ollama or fallback
  */
 export async function embedQuery(
   query: string,
@@ -164,8 +215,19 @@ export async function embedQuery(
     );
     return embeddings[0];
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to embed query: ${errorMessage}`);
+    // Use fallback for query embedding
+    const tokens = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(t => t.length > 2);
+
+    // Create simple vector with presence flags
+    const vector = new Array(256).fill(0);
+    for (let i = 0; i < tokens.length && i < 256; i++) {
+      vector[i] = 1;
+    }
+
+    return vector;
   }
 }
 

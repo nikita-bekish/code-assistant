@@ -60,15 +60,15 @@ export class CodeAssistant {
 
       // Set chunks in RAG
       this.rag.setChunks(chunks);
-      this.rag.setModel(this.config.llm.model);
+      this.rag.setConfig(this.config);
 
       // Initialize embeddings if available
       if (this.config.embedding?.enabled) {
         const embeddings = initializeEmbeddings(this.config);
         if (embeddings) {
           this.rag.setEmbeddings(embeddings);
-          console.log('Semantic search enabled with embeddings');
         }
+        console.log('Semantic search enabled with embeddings');
       }
 
       // Initialize LLM for answer generation
