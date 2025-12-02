@@ -176,25 +176,48 @@ Return empty array [] if no real issues found.
     const suggestions: string[] = [];
 
     const docPrompt = `
-Review these documentation file changes and suggest improvements:
+You are a technical documentation expert. Review these documentation file changes:
 
 Files changed: ${files.map(f => f.filename).join(', ')}
 
-Consider:
-1. Are changes well-documented?
-2. Are examples clear and correct?
-3. Is the documentation structure logical?
-4. Are there any missing explanations?
+Evaluate:
+1. Clarity and completeness of explanations
+2. Accuracy of examples
+3. Logical structure and organization
+4. Missing or outdated information
 
-Provide 2-3 brief suggestions to improve the documentation.
-Format as a simple text list.
+Provide 2-3 actionable suggestions to improve the documentation.
+
+Return ONLY valid JSON array:
+[
+  "First suggestion - specific and actionable",
+  "Second suggestion - clear and concise",
+  "Third suggestion - focused on improvements"
+]
+
+Return empty array [] if documentation is excellent.
 `;
 
     try {
       const result = await this.assistant.ask(docPrompt);
-      // Extract suggestions from response
-      const lines = result.answer.split('\n').filter((line: string) => line.trim().length > 0);
-      suggestions.push(...lines.slice(0, 3));
+
+      // Try to parse JSON response
+      const jsonMatch = result.answer.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const suggestionsData = JSON.parse(jsonMatch[0]) as string[];
+
+        // Filter out low-quality suggestions
+        const filtered = suggestionsData.filter(s =>
+          s &&
+          s.length > 10 &&
+          !s.toLowerCase().includes('user:') &&
+          !s.toLowerCase().includes('you:') &&
+          !s.toLowerCase().includes('review these') &&
+          !s.toLowerCase().includes('suggest improvements')
+        );
+
+        suggestions.push(...filtered.slice(0, 3));
+      }
     } catch (error) {
       console.warn('Failed to analyze documentation:', error);
     }
