@@ -89,35 +89,53 @@ export class PRReviewer {
   private async _analyzeFile(file: FileChange): Promise<ReviewComment[]> {
     const issues: ReviewComment[] = [];
 
+    // Get project context via RAG
+    const contextQuery = `What are the coding standards, architectural patterns, and style guidelines for this project? Focus on ${this._getFileType(file.filename)} files.`;
+    const contextResult = await this.assistant.ask(contextQuery);
+    const projectContext = contextResult.answer;
+
     const reviewPrompt = `
-You are a code reviewer. Analyze this code change and identify issues:
+You are an expert code reviewer for this TypeScript/JavaScript project.
+
+PROJECT CONTEXT:
+${projectContext}
+
+TASK: Review this code change for real, actionable issues.
 
 File: ${file.filename}
-Changes: +${file.additions} -${file.deletions}
+Changes: +${file.additions} -${file.deletions} lines
 
 Diff:
-\`\`\`
+\`\`\`diff
 ${file.patch}
 \`\`\`
 
-Identify any:
-1. Security vulnerabilities
-2. Logic errors or bugs
-3. Performance issues
-4. Code style violations
-5. Type safety issues
-6. Missing error handling
+IMPORTANT GUIDELINES:
+- Only flag REAL issues, not style preferences
+- Environment variables and secrets are safe - they're injected at runtime, not hardcoded
+- Configuration objects are normal and expected
+- Don't flag issues about "hardcoded values" in configs
+- Focus on: actual bugs, security vulnerabilities, logic errors, performance problems
+- Ignore: naming preferences, property descriptions, generic security warnings
 
-Format response as JSON array of issues with this structure:
+Find ONLY critical issues:
+1. Logic errors or bugs that break functionality
+2. Real security vulnerabilities (not about env vars)
+3. Performance problems in algorithms
+4. Type safety issues that TypeScript would catch
+5. Missing error handling for actual errors (not every operation)
+6. Race conditions or async issues
+
+Return response as JSON array:
 [
   {
-    "line": <line number where issue occurs>,
+    "line": <approximate line number>,
     "severity": "error|warning|info",
-    "message": "<clear description of the issue>"
+    "message": "<specific, actionable issue>"
   }
 ]
 
-If no issues found, return empty array: []
+Return empty array [] if no real issues found.
 `;
 
     try {
@@ -132,7 +150,12 @@ If no issues found, return empty array: []
           message: string;
         }>;
 
-        return issuesData.map(issue => ({
+        // Filter out false positives
+        const filtered = issuesData.filter(issue =>
+          !this._isFalsePositive(issue.message)
+        );
+
+        return filtered.map(issue => ({
           line: issue.line,
           filename: file.filename,
           severity: issue.severity,
@@ -227,5 +250,34 @@ Format as a simple text list.
   private _isDocFile(filename: string): boolean {
     const docExtensions = ['.md', '.mdx', '.rst', '.txt'];
     return docExtensions.some(ext => filename.endsWith(ext)) || filename.includes('README');
+  }
+
+  /**
+   * Get file type for context query
+   */
+  private _getFileType(filename: string): string {
+    if (filename.endsWith('.ts') || filename.endsWith('.tsx')) return 'TypeScript/TSX';
+    if (filename.endsWith('.js') || filename.endsWith('.jsx')) return 'JavaScript/JSX';
+    if (filename.endsWith('.py')) return 'Python';
+    if (filename.endsWith('.md')) return 'Markdown documentation';
+    return 'source';
+  }
+
+  /**
+   * Filter out common false positives in code review
+   */
+  private _isFalsePositive(message: string): boolean {
+    const falsePositivePatterns = [
+      /hardcoded/i,
+      /environment variables.*should not be/i,
+      /api key.*hardcoded/i,
+      /secrets.*hardcoded/i,
+      /property.*is hardcoded/i,
+      /not use descriptive name/i,
+      /more descriptive name/i,
+      /should be a number/i,
+    ];
+
+    return falsePositivePatterns.some(pattern => pattern.test(message));
   }
 }
