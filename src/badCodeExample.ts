@@ -3,7 +3,9 @@
  * DO NOT USE IN PRODUCTION
  */
 
-import { Database } from 'better-sqlite3';
+interface Database {
+  prepare(query: string): { get(): any };
+}
 
 // ISSUE 1: SQL Injection vulnerability
 export function getUserById(userId: string, db: Database): any {
