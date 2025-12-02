@@ -45,6 +45,7 @@ mca init
 ```
 
 This will interactively ask you:
+
 - Project name
 - Project description
 - Folders to index
@@ -59,6 +60,7 @@ mca index
 ```
 
 This will:
+
 - Read all files in included folders
 - Create text chunks for RAG
 - Save the index to `node_modules/.code-assistant`
