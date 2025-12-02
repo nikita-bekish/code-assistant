@@ -44,7 +44,7 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Run code review
-        run: npx ts-node scripts/review-pr.ts
+        run: node dist/scripts/review-pr.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
