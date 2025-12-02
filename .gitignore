@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
@@ -8,6 +7,10 @@ pnpm-lock.yaml
 dist/
 build/
 *.tsbuildinfo
+scripts/*.js
+scripts/*.js.map
+scripts/*.d.ts
+scripts/*.d.ts.map
 
 # IDE
 .vscode/
