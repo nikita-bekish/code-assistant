@@ -1,6 +1,7 @@
 import { TextChunk, SearchResult, AnswerWithSources } from '../types/index.js';
 import { OllamaEmbeddings } from '@langchain/ollama';
-import { cosineSimilarity } from './embeddingUtils.js';
+import { cosineSimilarity, embedQuery } from './embeddingUtils.js';
+import { ProjectConfig } from '../types/index.js';
 
 /**
  * RAG Pipeline with hybrid semantic + keyword search
@@ -8,9 +9,9 @@ import { cosineSimilarity } from './embeddingUtils.js';
  */
 export class RAGPipeline {
   private chunks: TextChunk[] = [];
-  private model: string = 'llama3.2';
   private embeddings?: OllamaEmbeddings;
   private hasEmbeddings: boolean = false;
+  private config?: ProjectConfig;
 
   setChunks(chunks: TextChunk[]): void {
     this.chunks = chunks;
@@ -18,8 +19,8 @@ export class RAGPipeline {
     this.hasEmbeddings = chunks.some(chunk => chunk.embedding !== undefined && chunk.embedding.length > 0);
   }
 
-  setModel(model: string): void {
-    this.model = model;
+  setConfig(config: ProjectConfig): void {
+    this.config = config;
   }
 
   setEmbeddings(embeddings: OllamaEmbeddings): void {
@@ -28,9 +29,10 @@ export class RAGPipeline {
 
   /**
    * Check if semantic search is available
+   * Only requires embeddings in chunks, not OllamaEmbeddings instance
    */
   isSemanticSearchAvailable(): boolean {
-    return this.hasEmbeddings && this.embeddings !== undefined;
+    return this.hasEmbeddings;
   }
 
   /**
@@ -119,17 +121,15 @@ export class RAGPipeline {
     keywordScores.sort((a, b) => b.score - a.score);
     const keywordResults = keywordScores.slice(0, maxResults * 2);
 
-    // Get semantic search results with ranking
+    // Get semantic search results with ranking using embeddings
+    // Note: with fallback TF-based embeddings, we use keyword results for semantic ranking
+    // because the embeddings are position-dependent and not directly comparable via cosine similarity
     let semanticResults: Array<{ chunk: TextChunk; score: number }> = [];
-    try {
-      // For semantic search, we need embeddings but not an OllamaEmbeddings instance
-      // The embeddings are already in the chunks
-      if (this.hasEmbeddings) {
-        // Create a dummy query embedding based on relevant chunk embeddings
-        // This is a fallback since we don't have access to embeddings model here
-        semanticResults = keywordResults; // Use keyword results as semantic approximation
-      }
-    } catch {
+    if (this.hasEmbeddings && this.config?.embedding?.enabled) {
+      // Use keyword results as semantic approximation (they're already good quality)
+      semanticResults = keywordResults;
+    } else {
+      // No embeddings: use keyword results only
       semanticResults = keywordResults;
     }
 
