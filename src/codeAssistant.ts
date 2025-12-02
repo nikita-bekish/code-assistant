@@ -8,6 +8,8 @@ import { ConversationManager } from './rag/conversationManager.js';
 import { initializeEmbeddings } from './rag/embeddingUtils.js';
 import { Ollama } from '@langchain/ollama';
 import { GitMCPServer } from './mcp/gitServer.js';
+import { LLMProvider, LLMConfig } from './llm/llmProvider.js';
+import { OpenAIProvider } from './llm/openaiProvider.js';
 
 export class CodeAssistant {
   private config: ProjectConfig;
@@ -16,7 +18,7 @@ export class CodeAssistant {
   private rag: RAGPipeline;
   private conversationManager: ConversationManager | null = null;
   private projectContext: ProjectContext | null = null;
-  private llm: Ollama | null = null;
+  private llm: Ollama | LLMProvider | null = null;
   private mcpServer: GitMCPServer | null = null;
 
   constructor(config: ProjectConfig) {
@@ -72,10 +74,25 @@ export class CodeAssistant {
       }
 
       // Initialize LLM for answer generation
-      this.llm = new Ollama({
-        model: this.config.llm.model,
-        baseUrl: 'http://localhost:11434',
-      });
+      // Use OpenAI if API key available (CI/CD or local testing), else Ollama
+      const openaiKey = process.env.OPENAI_API_KEY;
+      if (openaiKey) {
+        const llmConfig: LLMConfig = {
+          provider: 'openai',
+          model: this.config.llm.model || 'gpt-3.5-turbo',
+          temperature: this.config.llm.temperature || 0.2,
+          maxTokens: 2000,
+          apiKey: openaiKey,
+        };
+        this.llm = new OpenAIProvider(llmConfig);
+        console.log('Using OpenAI LLM provider');
+      } else {
+        this.llm = new Ollama({
+          model: this.config.llm.model,
+          baseUrl: 'http://localhost:11434',
+        });
+        console.log('Using Ollama LLM provider');
+      }
 
       // Initialize MCP server for git integration
       this.mcpServer = new GitMCPServer(this.config.paths.git);
