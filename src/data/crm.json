@@ -27,7 +27,7 @@
       "status": "open",
       "priority": "high",
       "created_at": "2025-12-01T10:00:00Z",
-      "updated_at": "2025-12-03T10:32:56.573Z",
+      "updated_at": "2025-12-03T13:29:34.330Z",
       "messages": [
         {
           "sender": "user",
@@ -103,6 +103,11 @@
           "sender": "support_bot",
           "text": "Hello John,\n\nThank you for reaching out to us regarding the authentication issue with your account. I'm happy to help you resolve this problem.\n\nTo assist you further, let's start by checking if there's an issue with your password reset process. According to our documentation, you can reset your password by following these steps:\n\n1. Go to the [Documentation](link) and scroll down to the \"Resetting Your Password\" section.\n2. Click on the \"Forgot Password?\" link next to your email address (john@example.com).\n3. Follow the instructions to enter your email address, select a recovery method, and create a new password.\n\nIf you encounter any issues during this process, feel free to let me know, and I'll do my best to guide you through it.\n\nAdditionally, if you're still experiencing trouble with authentication, please try checking your email spam folder for the password reset link. If you didn't receive it, you can request a new link by following these steps:\n\n<tool>git_branch</tool>\n\nPlease run this command and let me know the result. This will help us verify that there are no issues with the branch or repository.\n\nOnce I have the output from <tool>git_branch</tool>, I'll be able to assist you further.\n\nLooking forward to hearing back from you, John!\n\nBest regards,\n[Your Name]\nCustomer Support SpecialistYou are currently on a branch named \"bad-code\".",
           "timestamp": "2025-12-03T10:32:56.572Z"
+        },
+        {
+          "sender": "support_agent",
+          "text": "Get info from messages related to this ticket.",
+          "timestamp": "2025-12-03T13:29:34.328Z"
         }
       ]
     },
@@ -117,6 +122,29 @@
       "created_at": "2025-12-02T14:30:00Z",
       "updated_at": "2025-12-02T14:30:00Z",
       "messages": []
+    },
+    {
+      "id": "ticket_1764768016694",
+      "user_id": "user_1",
+      "title": "...",
+      "description": "...",
+      "category": "optional",
+      "priority": "optional",
+      "status": "waiting_customer",
+      "created_at": "2025-12-03T13:20:16.694Z",
+      "updated_at": "2025-12-03T13:25:30.706Z",
+      "messages": [
+        {
+          "sender": "user",
+          "text": "...",
+          "timestamp": "2025-12-03T13:20:16.704Z"
+        },
+        {
+          "sender": "support_agent",
+          "text": "hello, boi",
+          "timestamp": "2025-12-03T13:24:35.285Z"
+        }
+      ]
     }
   ]
 }
