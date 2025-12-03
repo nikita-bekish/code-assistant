@@ -78,6 +78,15 @@ export class CRMService {
     this.save();
   }
 
+  // ЗАПИСЬ: Update ticket with partial updates
+  updateTicket(ticketId: string, updates: any): void {
+    const ticket = this.data.tickets.find((t: Ticket) => t.id === ticketId);
+    if (ticket) {
+      Object.assign(ticket, updates);
+      this.save();
+    }
+  }
+
   // HELPER: Загружаем JSON из файла
   private load(): void {
     // Читаем файл: fs.readFileSync(this.filePath, 'utf-8')
