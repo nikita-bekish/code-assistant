@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "crm": {
+      "command": "node",
+      "args": ["dist/start-crm-mcp-server.js"],
+      "cwd": ".",
+      "env": {
+        "CRM_PATH": "./src/data/crm.json"
+      }
+    }
+  }
+}
