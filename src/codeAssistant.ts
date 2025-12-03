@@ -209,6 +209,13 @@ export class CodeAssistant {
   }
 
   /**
+   * Search for relevant documentation using RAG
+   */
+  async search(query: string): Promise<SearchResult[]> {
+    return this.rag.search(query);
+  }
+
+  /**
    * Start MCP server for git tools
    */
   async startMCPServer(): Promise<void> {

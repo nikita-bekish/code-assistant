@@ -106,7 +106,7 @@ export class ProjectIndexer {
   private async _indexFile(filePath: string, relativePath: string): Promise<void> {
     try {
       // Check file extension
-      const ext = path.extname(filePath);
+      const ext = path.extname(filePath).slice(1); // Remove the leading dot
       if (!this.config.indexing.includeFileTypes.includes(ext)) {
         return;
       }
