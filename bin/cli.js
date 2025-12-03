@@ -18,7 +18,7 @@ const DEFAULT_CONFIG = {
     output: "node_modules/.code-assistant",
   },
   indexing: {
-    includeFolders: ["src", "lib"],
+    includeFolders: ["src", "lib", "docs"],
     excludeFolders: [
       "node_modules",
       ".git",

@@ -111,6 +111,8 @@ export interface AnswerWithSources {
   answer: string;
   sources: SearchResult[];
   confidence: number;
+  toolsUsed?: string[]; // Tools that were invoked to generate this answer
+  usedTools?: boolean; // Indicate if MCP tools were used
 }
 
 // Conversation types

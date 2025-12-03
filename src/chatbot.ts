@@ -70,6 +70,11 @@ export class ChatBotCLI {
 
           console.log(chalk.green("\nAssistant: ") + result.answer);
 
+          // Show tools used
+          if (result.toolsUsed && result.toolsUsed.length > 0) {
+            console.log(chalk.cyan(`\n🔧 Tools used: ${result.toolsUsed.join(", ")}`));
+          }
+
           if (result.sources.length > 0) {
             console.log(chalk.gray("\nSources:"));
             for (let i = 0; i < result.sources.length; i++) {

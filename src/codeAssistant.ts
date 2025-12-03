@@ -22,6 +22,7 @@ export class CodeAssistant {
   private llm: Ollama | LLMProvider | null = null;
   private mcpServer: GitMCPServer | null = null;
   private crm: CRMService | null = null;
+  private toolsUsedInCurrentAnswer: string[] = [];
 
   constructor(config: ProjectConfig) {
     this.config = config;
@@ -165,7 +166,9 @@ export class CodeAssistant {
     return {
       answer,
       sources: searchResults,
-      confidence: this._calculateConfidence(searchResults)
+      confidence: this._calculateConfidence(searchResults),
+      toolsUsed: this.toolsUsedInCurrentAnswer.length > 0 ? this.toolsUsedInCurrentAnswer : undefined,
+      usedTools: this.toolsUsedInCurrentAnswer.length > 0
     };
   }
 
@@ -260,6 +263,7 @@ export class CodeAssistant {
       throw new Error('LLM not initialized');
     }
 
+    this.toolsUsedInCurrentAnswer = []; // Reset tools tracking
     const toolsDescription = this._getToolsDescription();
     let fullPrompt = `${systemPrompt}\n\nQuestion: ${question}\n\n${toolsDescription}`;
     let finalAnswer = '';
@@ -290,6 +294,11 @@ export class CodeAssistant {
         }
 
         const [, toolName, inputStr] = toolMatch;
+
+        // Track tool usage
+        if (!this.toolsUsedInCurrentAnswer.includes(toolName)) {
+          this.toolsUsedInCurrentAnswer.push(toolName);
+        }
 
         let input: any = undefined;
         if (inputStr) {
@@ -342,22 +351,31 @@ Based ONLY on the tool result above, provide a complete and detailed answer to t
     const gitKeywords = [
       'branch', 'status', 'commit', 'git', 'changes', 'modified',
       'staged', 'untracked', 'push', 'pull', 'merge', 'rebase',
-      'checkout', 'tag', 'log', 'diff', 'stash', 'reset',
+      'checkout', 'tag', 'git log', 'diff', 'stash', 'reset', // Use 'git log' instead of 'log'
       'what branch', 'current branch', 'which branch',
       'git status', 'repository status', 'repo status',
       'what changes', 'modified files', 'changed files'
     ];
 
     const crmKeywords = [
-      'user', 'ticket', 'support', 'customer', 'issue', 'problem',
+      'user', 'ticket', 'support', 'customer',
       'get_user', 'list_tickets', 'create_ticket', 'update_ticket',
-      'add_message', 'search_tickets', 'information',
-      'list', 'search', 'create', 'update', 'delete', 'get'
+      'add_message', 'search_tickets',
+      'support ticket', 'create ticket', 'update ticket' // More specific patterns
     ];
 
     const lowerQuestion = question.toLowerCase();
-    const isGit = gitKeywords.some(keyword => lowerQuestion.includes(keyword));
-    const isCRM = crmKeywords.some(keyword => lowerQuestion.includes(keyword));
+
+    // Use word boundary regex for more precise matching
+    const isGit = gitKeywords.some(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      return regex.test(lowerQuestion);
+    });
+
+    const isCRM = crmKeywords.some(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      return regex.test(lowerQuestion);
+    });
 
     return isGit || isCRM;
   }
@@ -402,13 +420,26 @@ You MUST respond:
 <input>{"user_id": "user_1"}</input>
 [Then your answer based on tool result]
 
+User asks: "List all tickets for user user_1"
+You MUST respond:
+<tool>list_tickets</tool>
+<input>{"user_id": "user_1"}</input>
+[Then your answer based on tool result]
+
 User asks: "Search for tickets about authentication"
 You MUST respond:
 <tool>search_tickets</tool>
 <input>{"query": "authentication"}</input>
 [Then your answer based on tool result]
 
-IMPORTANT: DO NOT provide generic answers - ALWAYS use the available tools!`;
+**IMPORTANT REQUIREMENTS:**
+- For list_tickets: ALWAYS require user_id in the input
+- For get_user: ALWAYS require user_id
+- For create_ticket: ALWAYS require user_id, title, and description
+- If a question is about a specific user, extract their ID and use it
+- If user_id is not provided but needed, ask the user to provide it
+
+DO NOT provide generic answers - ALWAYS use the available tools!`;
   }
 
   /**
