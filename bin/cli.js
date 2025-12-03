@@ -5,7 +5,7 @@ import fs from "fs/promises";
 import inquirer from "inquirer";
 import path from "path";
 import { fileURLToPath } from "url";
-import { ChatBotCLI, CodeAssistant, ProjectIndexer } from "../dist/index.js";
+import { ChatBotCLI, CodeAssistant, ProjectIndexer } from "../dist/src/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,7 +18,7 @@ const DEFAULT_CONFIG = {
     output: "node_modules/.code-assistant",
   },
   indexing: {
-    includeFolders: ["src", "lib"],
+    includeFolders: ["src", "lib", "docs"],
     excludeFolders: [
       "node_modules",
       ".git",
