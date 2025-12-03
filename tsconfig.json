@@ -15,6 +15,6 @@
     "sourceMap": true,
     "moduleResolution": "node"
   },
-  "include": ["src/**/*", "scripts/**/*", "test-support.ts", "start-support-server.ts", "start-crm-mcp-server.ts"],
+  "include": ["src/**/*", "scripts/**/*", "start-support-server.ts"],
   "exclude": ["node_modules", "dist"]
 }
