@@ -125,26 +125,29 @@ export class CodeAssistant {
       throw new Error('CodeAssistant not initialized. Call initialize() first.');
     }
 
+    // Reset tools tracking for this answer
+    this.toolsUsedInCurrentAnswer = [];
+
     // Add user message to conversation
     this.conversationManager.addUserMessage(question);
 
-    // Check if this is a tool-based question FIRST (before RAG search)
-    const isToolQuestion = this._isGitQuestion(question);
+    // Classify the question using LLM-based classifier
+    const category = await this._classifyQuestion(question);
     const hasLLM = !!this.llm;
 
-    // Search for relevant context (only if NOT a tool question)
-    const searchResults = !isToolQuestion ? this.rag.search(question, this.config.llm.maxResults) : [];
+    // Search for relevant context (only for RAG questions)
+    const searchResults = category === 'rag' ? this.rag.search(question, this.config.llm.maxResults) : [];
     const hasSearchResults = searchResults.length > 0;
 
     // Create prompt
     const systemPrompt = this.config.prompt.system
       .replace('{projectName}', this.config.projectName);
 
-    // Generate answer using LLM with tools if available
+    // Generate answer based on category
     let answer: string;
     try {
-      if (hasLLM && isToolQuestion) {
-        // PRIORITY 1: Tool-based questions (Git/CRM) - use tool calling
+      if (hasLLM && (category === 'git' || category === 'crm' || category === 'tasks')) {
+        // PRIORITY 1: Tool-based questions (Git/CRM/Tasks) - use tool calling
         answer = await this._generateAnswerWithTools(systemPrompt, question);
       } else if (hasLLM && hasSearchResults) {
         // PRIORITY 2: RAG-based questions with search results
@@ -263,7 +266,6 @@ export class CodeAssistant {
       throw new Error('LLM not initialized');
     }
 
-    this.toolsUsedInCurrentAnswer = []; // Reset tools tracking
     const toolsDescription = this._getToolsDescription();
     let fullPrompt = `${systemPrompt}\n\nQuestion: ${question}\n\n${toolsDescription}`;
     let finalAnswer = '';
@@ -345,39 +347,88 @@ Based ONLY on the tool result above, provide a complete and detailed answer to t
   }
 
   /**
-   * Detect if a question is git-related or CRM-related
+   * Classify question into categories: git, crm, tasks, or rag
+   * Uses simple heuristics for obvious cases, falls back to LLM for ambiguous ones
    */
-  private _isGitQuestion(question: string): boolean {
-    const gitKeywords = [
-      'branch', 'status', 'commit', 'git', 'changes', 'modified',
-      'staged', 'untracked', 'push', 'pull', 'merge', 'rebase',
-      'checkout', 'tag', 'git log', 'diff', 'stash', 'reset', // Use 'git log' instead of 'log'
-      'what branch', 'current branch', 'which branch',
-      'git status', 'repository status', 'repo status',
-      'what changes', 'modified files', 'changed files'
-    ];
+  private async _classifyQuestion(question: string): Promise<'git' | 'crm' | 'tasks' | 'rag'> {
+    const lower = question.toLowerCase();
 
-    const crmKeywords = [
-      'user', 'ticket', 'support', 'customer',
-      'get_user', 'list_tickets', 'create_ticket', 'update_ticket',
-      'add_message', 'search_tickets',
-      'support ticket', 'create ticket', 'update ticket' // More specific patterns
-    ];
+    // Simple heuristic - fast checks for obvious cases
+    // Git commands
+    if (lower.startsWith('git ') || lower.includes('git status') || lower.includes('git branch')) {
+      return 'git';
+    }
+    if (/\b(branch|commit|push|pull|merge|rebase)\b/.test(lower) && lower.includes('git')) {
+      return 'git';
+    }
 
-    const lowerQuestion = question.toLowerCase();
+    // CRM - explicit user/ticket references (CHECK BEFORE TASKS!)
+    if (lower.includes('user_') || lower.includes('ticket_')) {
+      return 'crm';
+    }
+    if (/\b(ticket|support)\b/.test(lower) && (/\bupdate\b|\bcreate\b|\blist\b|\bget\b|\bshow\b/.test(lower))) {
+      return 'crm';
+    }
+    if (lower.startsWith('list tickets') || lower.startsWith('create ticket') || lower.startsWith('get user') || lower.startsWith('update ticket')) {
+      return 'crm';
+    }
 
-    // Use word boundary regex for more precise matching
-    const isGit = gitKeywords.some(keyword => {
-      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-      return regex.test(lowerQuestion);
-    });
+    // Tasks - explicit task management (team work tasks, NOT support tickets)
+    if (lower.startsWith('create task') || lower.startsWith('show tasks') || lower.startsWith('list tasks')) {
+      return 'tasks';
+    }
+    if (/\btask\b/.test(lower) && (/\bhigh\b|\blow\b|\bmedium\b/.test(lower) || /\bcreate\b|\blist\b|\bshow\b/.test(lower))) {
+      return 'tasks';
+    }
 
-    const isCRM = crmKeywords.some(keyword => {
-      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-      return regex.test(lowerQuestion);
-    });
+    // For ambiguous cases - use LLM classifier
+    return await this._llmClassify(question);
+  }
 
-    return isGit || isCRM;
+  /**
+   * Use LLM to classify ambiguous questions
+   */
+  private async _llmClassify(question: string): Promise<'git' | 'crm' | 'tasks' | 'rag'> {
+    if (!this.llm) {
+      // Fallback to RAG if LLM not available
+      return 'rag';
+    }
+
+    const prompt = `Classify this user question into ONE category:
+
+Categories:
+- git: Questions about git commands, branches, commits, repository status, code changes
+- crm: Questions about users, support tickets, customers, customer support
+- tasks: Questions about team tasks, work priorities, task assignments, project management, what to do next
+- rag: Questions about documentation, code explanation, architecture, how things work, general questions
+
+User question: "${question}"
+
+Rules:
+- Answer with ONLY ONE WORD: git, crm, tasks, or rag
+- If question mentions specific users or tickets → crm
+- If question is about team work or priorities → tasks
+- If question is about git/repository → git
+- Default to rag for general questions
+
+Answer:`;
+
+    try {
+      const response = await this.llm.invoke(prompt);
+      const classification = typeof response === 'string' ? response.trim().toLowerCase() : String(response).trim().toLowerCase();
+
+      // Validate response
+      if (classification.includes('git')) return 'git';
+      if (classification.includes('crm')) return 'crm';
+      if (classification.includes('task')) return 'tasks';
+      if (classification.includes('rag')) return 'rag';
+
+      // Default fallback
+      return 'rag';
+    } catch (error) {
+      console.error('Error classifying question with LLM:', error);
+      return 'rag'; // Fallback to RAG
+    }
   }
 
   /**
@@ -402,10 +453,14 @@ You have access to these tools - USE THEM FOR EVERY RELEVANT QUESTION:
 8. search_tickets - Search tickets (input: {"query": "optional", "user_id": "optional"})
 
 **TOOL DETECTION RULES:**
-- ANY mention of "user" → use get_user
-- ANY mention of "tickets", "ticket", "issue", "support" → use list_tickets, search_tickets, or create_ticket
-- ANY mention of "branch" → use git_branch
-- ANY mention of "git", "status", "changes", "modified" → use git_status
+- Get user info → use get_user with user_id
+- List/show tickets → use list_tickets with user_id
+- Search tickets by query → use search_tickets with query
+- CREATE NEW ticket → use create_ticket (only when explicitly creating)
+- UPDATE EXISTING ticket → use update_ticket (when ticket_id is provided and needs update)
+- Add message to ticket → use add_message with ticket_id
+- Git branch info → use git_branch
+- Git repository status → use git_status
 
 **MANDATORY FORMAT - YOU MUST FOLLOW THIS EXACTLY:**
 <tool>tool_name</tool>
@@ -414,19 +469,31 @@ You have access to these tools - USE THEM FOR EVERY RELEVANT QUESTION:
 AFTER using the tool, incorporate results naturally in your response.
 
 **EXAMPLES:**
-User asks: "Get information about user user_1"
+User: "Get information about user user_1"
 You MUST respond:
 <tool>get_user</tool>
 <input>{"user_id": "user_1"}</input>
 [Then your answer based on tool result]
 
-User asks: "List all tickets for user user_1"
+User: "List all tickets for user user_1"
 You MUST respond:
 <tool>list_tickets</tool>
 <input>{"user_id": "user_1"}</input>
 [Then your answer based on tool result]
 
-User asks: "Search for tickets about authentication"
+User: "Update ticket ticket_1 priority to high"
+You MUST respond:
+<tool>update_ticket</tool>
+<input>{"ticket_id": "ticket_1", "priority": "high"}</input>
+[Then your answer based on tool result]
+
+User: "Create a ticket for user_1 about login issue"
+You MUST respond:
+<tool>create_ticket</tool>
+<input>{"user_id": "user_1", "title": "Login issue", "description": "User cannot login"}</input>
+[Then your answer based on tool result]
+
+User: "Search for tickets about authentication"
 You MUST respond:
 <tool>search_tickets</tool>
 <input>{"query": "authentication"}</input>

@@ -88,11 +88,16 @@ export class ChatBotCLI {
             }
           }
 
-          console.log(
-            chalk.gray(
-              `\nConfidence: ${(result.confidence * 100).toFixed(0)}%\n`
-            )
-          );
+          // Only show confidence for RAG-based answers (not tools)
+          if (!result.usedTools) {
+            console.log(
+              chalk.gray(
+                `\nConfidence: ${(result.confidence * 100).toFixed(0)}%\n`
+              )
+            );
+          } else {
+            console.log(); // Empty line for spacing
+          }
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
