@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { SupportAssistant } from '../support/supportAssistant.js';
 import { ProjectConfig } from '../types/index.js';
+import { createTaskRoutes, initializeTasksService } from './taskRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,17 +12,24 @@ app.use(express.json());
 // Pretty print JSON responses
 app.set('json spaces', 2);
 
+// Mount task routes
+app.use('/api', createTaskRoutes());
+
 // Initialize support assistant
 let supportAssistant: SupportAssistant | null = null;
 
 /**
  * Initialize the support API server
  */
-export async function initializeSupportServer(config: ProjectConfig, crmPath?: string): Promise<void> {
+export async function initializeSupportServer(config: ProjectConfig, crmPath?: string, tasksPath?: string): Promise<void> {
   const finalCrmPath = crmPath || './src/data/crm.json';
+  const finalTasksPath = tasksPath || './src/data/tasks.json';
+
   supportAssistant = new SupportAssistant(finalCrmPath, config);
   await supportAssistant.initialize();
   console.log('Support Assistant initialized');
+
+  initializeTasksService(finalTasksPath);
 }
 
 /**
@@ -162,6 +170,11 @@ export function startSupportServer(): void {
     console.log(`  GET    /api/support/tickets/:user_id - Get user tickets`);
     console.log(`  GET    /api/support/ticket/:ticket_id - Get specific ticket`);
     console.log(`  PUT    /api/support/ticket/:ticket_id/status - Update ticket status`);
+    console.log(`  GET    /api/tasks - List all tasks`);
+    console.log(`  GET    /api/tasks/:id - Get specific task`);
+    console.log(`  POST   /api/tasks - Create new task`);
+    console.log(`  PUT    /api/tasks/:id - Update task`);
+    console.log(`  GET    /api/tasks/high-priority - Get high priority tasks`);
     console.log(`  GET    /api/health - Health check`);
   });
 }
