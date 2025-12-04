@@ -10,7 +10,7 @@ import { ConversationManager } from "./rag/conversationManager.js";
 import { initializeEmbeddings } from "./rag/embeddingUtils.js";
 import { RAGPipeline } from "./rag/ragPipeline.js";
 import { CRMService } from "./support/crmService.js";
-import { TasksService } from "./support/tasksService.js";
+import { TasksApiClient } from "./support/tasksApiClient.js";
 import {
   AnswerWithSources,
   ProjectConfig,
@@ -28,7 +28,7 @@ export class CodeAssistant {
   private llm: Ollama | LLMProvider | null = null;
   private mcpServer: GitMCPServer | null = null;
   private crm: CRMService | null = null;
-  private tasks: TasksService | null = null;
+  private tasksApi: TasksApiClient | null = null;
   private toolsUsedInCurrentAnswer: string[] = [];
 
   constructor(config: ProjectConfig) {
@@ -48,9 +48,15 @@ export class CodeAssistant {
         this.config.paths.root,
         this.config.paths.output
       );
-      const indexPath = path.join(outputDir, "chunks.json");
-      const statsPath = path.join(outputDir, "stats.json");
-
+      const indexPath = path.join(
+        "",
+        "node_modules/.code-assistant/chunks.json"
+      );
+      const statsPath = path.join(
+        "",
+        "node_modules/.code-assistant/stats.json"
+      );
+      console.log("nik indexPath", indexPath);
       let chunks;
       try {
         const chunkData = await fs.readFile(indexPath, "utf-8");
@@ -114,12 +120,20 @@ export class CodeAssistant {
       const crmPath = path.join(this.config.paths.root, "src/data/crm.json");
       this.crm = new CRMService(crmPath);
 
-      // Initialize Tasks service
-      const tasksPath = path.join(
-        this.config.paths.root,
-        "src/data/tasks.json"
-      );
-      this.tasks = new TasksService(tasksPath);
+      // Initialize Tasks API client (uses HTTP API instead of direct file access)
+      this.tasksApi = new TasksApiClient("http://localhost:3000");
+      // const tasksApiBaseUrl = this.config.services?.tasksApiBaseUrl;
+      // console.log("nik tasksApiBaseUrl", tasksApiBaseUrl);
+      // if (tasksApiBaseUrl) {
+      //   this.tasksApi = new TasksApiClient(tasksApiBaseUrl);
+      //   console.log(
+      //     `TasksApiClient initialized with baseUrl=${tasksApiBaseUrl}`
+      //   );
+      // } else {
+      //   console.warn(
+      //     "TasksApi baseUrl is not configured. Task tools will be unavailable."
+      //   );
+      // }
 
       // Get project context
       this.projectContext = await this.getProjectContext();
@@ -157,11 +171,6 @@ export class CodeAssistant {
 
     // Detect if this is an analytical question that needs RAG + tools
     const isAnalytical = await this._isAnalyticalQuestion(question);
-
-    // DEBUG: Log classification results
-    console.log(`[DEBUG] Question: "${question}"`);
-    console.log(`[DEBUG] Category: ${category}`);
-    console.log(`[DEBUG] IsAnalytical: ${isAnalytical}`);
 
     // Search for relevant context based on category and question type
     const searchResults =
@@ -906,78 +915,97 @@ DO NOT provide generic answers - ALWAYS use the available tools!`;
         }
         // Tasks tools
         case "list_tasks": {
-          if (!this.tasks) return "Error: Tasks service not initialized";
+          // if (!this.tasks) return "Error: Tasks service not initialized";
+
+          if (!this.tasksApi) return "Error: Tasks API client not initialized";
           const { priority, status, assignee } = input || {};
-          const filters: any = {};
-          if (priority) filters.priority = priority;
-          if (status) filters.status = status;
-          if (assignee) filters.assignee = assignee;
-          const tasks = this.tasks.getTasks(filters);
-          return JSON.stringify(
-            { success: true, count: tasks.length, tasks },
-            null,
-            2
-          );
+          try {
+            const { tasks, count } = await this.tasksApi.listTasks({
+              priority,
+              status,
+              assignee,
+            });
+            return JSON.stringify({ success: true, count, tasks }, null, 2);
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return `Error: Failed to list tasks via API: ${msg}`;
+          }
+          // const { priority, status, assignee } = input || {};
+          // const filters: any = {};
+          // if (priority) filters.priority = priority;
+          // if (status) filters.status = status;
+          // if (assignee) filters.assignee = assignee;
+          // const tasks = this.tasks.getTasks(filters);
+          // return JSON.stringify(
+          //   { success: true, count: tasks.length, tasks },
+          //   null,
+          //   2
+          // );
         }
         case "get_task": {
-          if (!this.tasks) return "Error: Tasks service not initialized";
+          if (!this.tasksApi) return "Error: Tasks API client not initialized";
           const { task_id } = input || {};
           if (!task_id) return "Error: task_id is required for get_task";
-          const task = this.tasks.getTask(task_id);
-          if (!task) return `Error: Task ${task_id} not found`;
-          return JSON.stringify({ success: true, task }, null, 2);
+          try {
+            const task = await this.tasksApi.getTask(task_id);
+            return JSON.stringify({ success: true, task }, null, 2);
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return `Error: ${msg}`;
+          }
         }
         case "create_task": {
-          if (!this.tasks) return "Error: Tasks service not initialized";
-          const { title, description, priority, assignee } = input || {};
+          if (!this.tasksApi) return "Error: Tasks API client not initialized";
+          const { title, description, priority, assignee, depends_on } = input || {};
           if (!title || !description || !assignee) {
             return "Error: title, description, and assignee are required for create_task";
           }
-          const taskId = `task_${Date.now()}`;
-          const newTask = {
-            id: taskId,
-            title,
-            description,
-            priority: priority || "medium",
-            status: "open" as const,
-            assignee,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            depends_on: input.depends_on || [],
-          };
-          this.tasks.createTask(newTask);
-          return JSON.stringify(
-            {
-              success: true,
-              task_id: taskId,
-              message: "Task created successfully",
-              task: newTask,
-            },
-            null,
-            2
-          );
+          try {
+            const result = await this.tasksApi.createTask({
+              title,
+              description,
+              priority,
+              assignee,
+              depends_on
+            });
+            return JSON.stringify(
+              {
+                success: true,
+                task_id: result.task.id,
+                message: "Task created successfully",
+                task: result.task,
+              },
+              null,
+              2
+            );
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return `Error: Failed to create task via API: ${msg}`;
+          }
         }
         case "update_task": {
-          if (!this.tasks) return "Error: Tasks service not initialized";
+          if (!this.tasksApi) return "Error: Tasks API client not initialized";
           const { task_id, status, priority, assignee } = input || {};
           if (!task_id) return "Error: task_id is required for update_task";
-          const task = this.tasks.getTask(task_id);
-          if (!task) return `Error: Task ${task_id} not found`;
-          const updates: any = {};
-          if (status) updates.status = status;
-          if (priority) updates.priority = priority;
-          if (assignee) updates.assignee = assignee;
-          this.tasks.updateTask(task_id, updates);
-          const updatedTask = this.tasks.getTask(task_id);
-          return JSON.stringify(
-            {
-              success: true,
-              message: `Task ${task_id} updated successfully`,
-              task: updatedTask,
-            },
-            null,
-            2
-          );
+          try {
+            const updates: any = {};
+            if (status) updates.status = status;
+            if (priority) updates.priority = priority;
+            if (assignee) updates.assignee = assignee;
+            const result = await this.tasksApi.updateTask(task_id, updates);
+            return JSON.stringify(
+              {
+                success: true,
+                message: `Task ${task_id} updated successfully`,
+                task: result.task,
+              },
+              null,
+              2
+            );
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return `Error: Failed to update task via API: ${msg}`;
+          }
         }
         default:
           return `Unknown tool: ${toolName}`;

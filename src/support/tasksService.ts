@@ -33,7 +33,7 @@ export class TasksService {
     assignee?: string;
   }): Task[] {
     let tasks = this.data.tasks;
-    console.log("nik tasks", tasks, "filters", filters);
+
     if (filters) {
       if (filters.priority) {
         tasks = tasks.filter((t) => t.priority === filters.priority);
