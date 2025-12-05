@@ -41,7 +41,7 @@ export interface ProjectConfig {
   embedding?: {
     enabled: boolean;
     model: string;
-    provider: 'ollama';
+    provider: "ollama";
     baseUrl?: string;
   };
 
@@ -49,6 +49,10 @@ export interface ProjectConfig {
     enabled: boolean;
     port: number;
     tools: string[];
+  };
+
+  services?: {
+    tasksApiBaseUrl?: string; // например "http://localhost:3000"
   };
 }
 
@@ -104,7 +108,7 @@ export interface SearchResult {
   content: string;
   source: string;
   similarity: number;
-  metadata: TextChunk['metadata'];
+  metadata: TextChunk["metadata"];
 }
 
 export interface AnswerWithSources {
@@ -117,7 +121,7 @@ export interface AnswerWithSources {
 
 // Conversation types
 export interface Message {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp: number;
   sources?: SearchResult[];

@@ -5,7 +5,11 @@ import fs from "fs/promises";
 import inquirer from "inquirer";
 import path from "path";
 import { fileURLToPath } from "url";
-import { ChatBotCLI, CodeAssistant, ProjectIndexer } from "../dist/src/index.js";
+import {
+  ChatBotCLI,
+  CodeAssistant,
+  ProjectIndexer,
+} from "../dist/src/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -126,6 +130,9 @@ async function initProject() {
     llm: {
       ...DEFAULT_CONFIG.llm,
       model: answers.model,
+    },
+    services: {
+      tasksApiBaseUrl: "http://localhost:3000",
     },
   };
 
