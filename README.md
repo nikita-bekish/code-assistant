@@ -1,392 +1,231 @@
-# My Code Assistant - Персональный ассистент для кода
+# @nikita-bekish/code-assistant
 
-Универсальный framework для создания кодового ассистента, который можно интегрировать в **любой проект**. Использует RAG (Retrieval Augmented Generation) для понимания вашего кода и помощи в навигации, анализе и разработке новых функций.
+🤖 AI-powered code assistant CLI with RAG (Retrieval-Augmented Generation), LLM classification, and MCP tools for frontend development.
 
-## 🎯 Что это делает
+## Features
 
-My Code Assistant:
-- **Индексирует** исходный код и документацию вашего проекта
-- **Понимает** структуру проекта через git
-- **Отвечает** на вопросы о коде с цитатами источников
-- **Помогает** разобраться с архитектурой, отладкой и реализацией функций
-- **Работает** с любым языком программирования и типом проекта
+- 🔍 **Semantic Search** - Find relevant code using RAG with vector embeddings
+- 💬 **Interactive Chat** - Ask questions about your codebase
+- 🏷️ **Smart Classification** - LLM-based question routing (git/crm/tasks/rag)
+- 🛠️ **MCP Tools** - Model Context Protocol for git operations, CRM, and task management
+- 📊 **Project Analysis** - Automatic indexing and code understanding
+- 🎯 **Frontend Focus** - Optimized for JavaScript/TypeScript projects
 
-## 🚀 Быстрый старт
+## Requirements
+
+- **Node.js** >= 18.0.0
+- **Ollama** - Local LLM runtime ([Installation guide](https://ollama.ai/))
+  ```bash
+  # Install Ollama
+  curl https://ollama.ai/install.sh | sh
+  
+  # Pull required models
+  ollama pull llama3.2
+  ollama pull nomic-embed-text
+  ```
+
+## Installation
+
+### Global (recommended)
 
 ```bash
-# Установка глобально
-npm install -g my-code-assistant
+npm install -g @nikita-bekish/code-assistant
+```
 
-# Инициализация в вашем проекте
+### Local
+
+```bash
+npm install @nikita-bekish/code-assistant
+npx code-assistant --help
+```
+
+## Quick Start
+
+1. **Initialize in your project:**
+```bash
 cd your-project
-mca init
-
-# Индексирование кода
-mca index
-
-# Запуск чата!
-mca chat
+code-assistant init
 ```
 
-## 💡 Пример использования
-
-```
-You: Как работает аутентификация в этом проекте?
-Assistant: Аутентификация использует JWT токены в httpOnly cookies:
-  [1] src/auth/jwtService.ts - Создание и проверка JWT
-  [2] src/middleware/auth.ts - Middleware для защиты маршрутов
-  [3] src/api/login.ts - Endpoint входа
-Confidence: 92%
-
-You: Где находится схема базы данных?
-Assistant: Модели БД находятся в src/models/:
-  [1] src/models/User.ts - Модель пользователя с валидацией
-  [2] src/models/Message.ts - Структура сообщений
-  [3] src/models/index.ts - Конфигурация БД
-Confidence: 88%
+2. **Index your codebase:**
+```bash
+code-assistant index
 ```
 
-## ✨ Возможности
+3. **Start chatting:**
+```bash
+code-assistant chat
+```
 
-### Основные функции
-- ✅ **Индексирование кода** - Автоматическое индексирование любого проекта
-- ✅ **RAG поиск** - Поиск релевантных фрагментов кода по семантике
-- ✅ **Семантический поиск** - Используется LLM embeddings (Ollama) для улучшенного понимания контекста
-- ✅ **Гибридный поиск** - Комбинирует ключевые слова и семантику для +76% точности
-- ✅ **Интеграция с Git** - Понимание истории проекта и ветвей
-- ✅ **Интерактивный чат** - Вопросы и ответы с указанием источников
-- ✅ **Контекст проекта** - Автоматическое определение структуры
+## Commands
 
-### Команды чата
-- `/help` - Доступные команды
-- `/git` - Статус git и последние коммиты
-- `/history` - История разговора
-- `/context` - Информация о проекте
-- `/clear` - Очистить разговор
-- `/exit` - Выход из чата
-
-### Конфигурация
-- **Универсальность** - Работает с любым языком (TypeScript, Python, Go и т.д.)
-- **Гибкость** - Выбирайте, что индексировать (папки, типы файлов)
-- **Настраиваемость** - Через `projectConfig.json`
-- **Шаблоны** - Готовые конфигурации для популярных типов проектов
-
-## 🧠 Семантический поиск с Ollama
-
-Включена поддержка **LLM-based embeddings** для понимания смысла кода, не только ключевых слов.
-
-### Быстрый старт с embeddings
+### `code-assistant init`
+Initialize configuration in your project.
 
 ```bash
-# 1. Установить Ollama (https://ollama.ai)
-ollama serve
-
-# 2. В другом терминале - загрузить модель
-ollama pull nomic-embed-text
-
-# 3. Переиндексировать проект
-mca index
-
-# Готово! Поиск теперь использует семантику
-mca chat
+code-assistant init
 ```
 
-### Улучшение точности
+Creates `.code-assistant-config.json` with default settings.
 
-| Тип запроса | Только ключевые слова | С embeddings |
-|------------|---------------------|-------------|
-| "Как работает индексирование?" | 46% | 80% |
-| "Что такое RAG пайплайн?" | 50% | 85% |
-| "Как использовать чат?" | 45% | 75% |
-| **Среднее улучшение** | **47%** | **80%** |
+### `code-assistant index`
+Index your codebase for semantic search.
 
-**+76% точности вместе с Ollama embeddings!**
+```bash
+code-assistant index
+```
 
-### Отключение embeddings
+Options:
+- Indexes all files according to `.code-assistant-config.json`
+- Generates embeddings using Ollama
+- Stores chunks in `node_modules/.code-assistant/`
 
-Если Ollama не доступен или embeddings замедляют работу, отключите в `projectConfig.json`:
+### `code-assistant chat`
+Start interactive chat session.
+
+```bash
+code-assistant chat
+```
+
+Example questions:
+- "How does authentication work?"
+- "Show me high priority tasks"
+- "What is the current git status?"
+- "List all open tickets for user_1"
+
+### `code-assistant reindex`
+Reindex the project (use after major code changes).
+
+```bash
+code-assistant reindex
+```
+
+## Configuration
+
+`.code-assistant-config.json` example:
 
 ```json
 {
-  "embedding": {
-    "enabled": false
-  }
-}
-```
-
-Система автоматически вернется к поиску только по ключевым словам.
-
-[Полная документация по embeddings →](./EMBEDDINGS.md)
-
-## 📋 Типы проектов
-
-Готовые шаблоны конфигураций для:
-- Обычных проектов
-- Веб-приложений (React, Vue, Angular)
-- Backend сервисов (Node, Python, Java)
-- Monorepo (Lerna, Turborepo, pnpm)
-
-## 🛠️ Способы установки
-
-### Способ 1: Глобальная установка
-
-```bash
-npm install -g my-code-assistant
-mca init
-mca index
-mca chat
-```
-
-### Способ 2: Локальная установка в проект
-
-```bash
-npm install my-code-assistant --save-dev
-npx mca init
-npx mca index
-npx mca chat
-```
-
-### Способ 3: Как библиотека
-
-```bash
-npm install my-code-assistant
-```
-
-```typescript
-import { CodeAssistant } from 'my-code-assistant';
-
-const config = { /* ... */ };
-const assistant = new CodeAssistant(config);
-await assistant.initialize();
-const answer = await assistant.ask('Как работает аутентификация?');
-```
-
-## 📚 Документация
-
-- [**SETUP.md**](./docs/SETUP.md) - Установка и быстрый старт
-- [**CONFIG.md**](./docs/CONFIG.md) - Параметры конфигурации и шаблоны
-- [**ARCHITECTURE.md**](./docs/ARCHITECTURE.md) - Техническая архитектура
-- [**EXAMPLES.md**](./docs/EXAMPLES.md) - Примеры использования
-- [**API.md**](./docs/API.md) - Справочник TypeScript API
-
-## 🏗️ Архитектура
-
-```
-┌─────────────────────────────────┐
-│      ChatBotCLI (Интерфейс)    │
-└──────────────────┬──────────────┘
-                   │
-        ┌──────────┴──────────┐
-        │                     │
-    ┌───▼────────┐    ┌──────▼────┐
-    │CodeAss.    │    │ RAGSearch │
-    └───┬────────┘    └──────┬────┘
-        │                    │
-    ┌───┴───────────────────┴────┐
-    │                            │
- ┌──▼────────┐   ┌──────────┐   │
- │ Индексер  │   │Git Helper│   │
- └───────────┘   └──────────┘   │
-                                │
-              ┌─────────────────┴───┐
-              │                     │
-         ┌────▼────┐           ┌───▼──┐
-         │ Chunks  │           │ Cache│
-         └─────────┘           └──────┘
-```
-
-## 🔄 Процесс работы
-
-1. **Инициализация** - `mca init` создаёт `projectConfig.json`
-2. **Индексирование** - `mca index` читает и разбивает код на блоки
-3. **Чат** - `mca chat` запускает интерактивный ассистент
-4. **Вопросы** - Задавайте вопросы, получайте ответы с источниками
-
-## ⚙️ Конфигурация
-
-Создайте `projectConfig.json`:
-
-```json
-{
-  "projectName": "мой-проект",
-  "projectDescription": "Описание моего проекта",
-
-  "paths": {
-    "root": ".",
-    "git": ".",
-    "output": "node_modules/.code-assistant"
-  },
-
+  "projectName": "My Project",
+  "projectDescription": "A modern web application",
   "indexing": {
     "includeFolders": ["src", "lib"],
-    "excludeFolders": ["node_modules", ".git", "dist"],
-    "includeFileTypes": [".ts", ".tsx", ".js", ".md"],
-    "excludePatterns": ["*.test.*", "*.spec.*"],
-    "maxFileSize": "1MB",
-    "chunkSize": 400,
-    "chunkOverlap": 100
+    "excludeFolders": ["node_modules", "dist", ".git"],
+    "includeFileTypes": ["js", "ts", "jsx", "tsx", "vue", "svelte"],
+    "chunkSize": 1024,
+    "chunkOverlap": 256
   },
-
-  "git": {
-    "enabled": true,
-    "includeCommitHistory": true,
-    "maxCommitsToFetch": 50
-  },
-
   "llm": {
     "model": "llama3.2",
-    "temperature": 0.2,
-    "topP": 0.8,
-    "contextWindow": 20,
+    "temperature": 0.7,
     "maxResults": 5
   },
-
-  "prompt": {
-    "system": "Ты помощник для {projectName}. Помогай разработчикам понимать код...",
-    "language": "ru"
+  "embedding": {
+    "model": "nomic-embed-text",
+    "provider": "ollama"
   }
 }
 ```
 
-Или используйте шаблоны:
+## Features Overview
+
+### 🔍 RAG (Retrieval-Augmented Generation)
+- Semantic code search using vector embeddings
+- Context-aware answers based on your codebase
+- Conversation memory for follow-up questions
+
+### 🏷️ Smart Question Classification
+- Automatic routing: git → crm → tasks → rag
+- LLM-based classification for ambiguous questions
+- Heuristics for fast obvious cases
+
+### 🛠️ MCP Tools
+**Git Tools:**
+- `git_branch` - Get current branch
+- `git_status` - Show repository status
+
+**CRM Tools:**
+- `get_user` - User information
+- `list_tickets` - User tickets
+- `create_ticket` - New support ticket
+- `update_ticket` - Update ticket status
+
+**Tasks Tools:**
+- `list_tasks` - Team tasks with filters
+- `create_task` - New task
+- `update_task` - Update task status
+
+## Examples
+
+### Basic Usage
 
 ```bash
-cp templates/config-web.json projectConfig.json     # Веб-приложения
-cp templates/config-backend.json projectConfig.json # Backend
-cp templates/config-monorepo.json projectConfig.json # Monorepo
+# Initialize and index
+code-assistant init
+code-assistant index
+
+# Ask about code
+code-assistant chat
+> How does authentication work in this project?
+
+# Ask about tasks
+> Show me high priority tasks
 ```
 
-## 🎬 Примеры использования
+### With OpenAI (optional)
 
-### Понимание архитектуры
-```
-You: Какая архитектура у этого проекта?
-Assistant: [объясняет с 3-5 источниками]
-```
-
-### Отладка
-```
-You: Почему иногда падает аутентификация?
-Assistant: [определяет проблему с конкретными файлами]
+```bash
+export OPENAI_API_KEY=your_key_here
+code-assistant chat
 ```
 
-### Помощь с реализацией
-```
-You: Как добавить email уведомления?
-Assistant: [направляет через существующие паттерны]
-```
+## Troubleshooting
 
-Подробнее см. [EXAMPLES.md](./docs/EXAMPLES.md).
+### "Ollama not found"
+Install Ollama from https://ollama.ai/
 
-## 🔧 Используемые технологии
-
-- **TypeScript** - Типобезопасная реализация
-- **LangChain** - RAG и LLM интеграция (опционально)
-- **Ollama** - Локальный LLM сервер (опционально, рекомендуется)
-- **Chalk** - Цветной вывод в терминал
-- **Inquirer** - Интерактивные подсказки CLI
-
-## 📦 Что включено
-
-```
-my-code-assistant/
-├── src/                          # Исходный код
-│   ├── types/                   # TypeScript интерфейсы
-│   ├── rag/                     # RAG pipeline и conversation
-│   ├── projectIndexer.ts        # Индексирование кода
-│   ├── gitHelper.ts             # Интеграция с Git
-│   ├── codeAssistant.ts         # Главный оркестратор
-│   ├── chatbot.ts               # CLI интерфейс
-│   └── index.ts                 # Экспорты
-├── bin/cli.js                   # Точка входа CLI
-├── templates/                   # Шаблоны конфигов
-├── docs/                        # Документация
-├── package.json
-├── tsconfig.json
-└── README.md
+### "Model not found"
+Pull required models:
+```bash
+ollama pull llama3.2
+ollama pull nomic-embed-text
 ```
 
-## 🎯 Случаи использования
-
-1. **Онбординг** - Новый разработчик изучает кодовую базу
-2. **Навигация** - Поиск релевантных файлов и функций
-3. **Отладка** - Понимание потоков ошибок и корневых причин
-4. **Документация** - Генерирование docs из кода
-5. **Рефакторинг** - Понимание влияния изменений
-6. **Разработка функций** - Поиск где добавить новый код
-7. **Code review** - Понимание что видит рецензент
-
-## 🚦 Требования
-
-- Node.js 18+
-- npm или yarn
-- Git репозиторий (опционально, но рекомендуется)
-- Ollama или другой LLM (для реальных LLM ответов)
-
-## 🔄 Планируемые функции
-
-- Семантический поиск с embeddings
-- Веб интерфейс для управления
-- Watch mode для автоматического перестроения индекса
-- Database backend для больших проектов
-- Интеграция с реальными LLM
-- Поддержка нескольких языков
-- Система плагинов
-- Распределённое индексирование
-
-## 💬 Команды чата
-
-```
-/help      - Показать доступные команды
-/git       - Статус Git и последние коммиты
-/history   - История разговора
-/context   - Информация о проекте
-/clear     - Очистить разговор
-/exit      - Выход из чата
+### "No index found"
+Run indexing first:
+```bash
+code-assistant index
 ```
 
-## 🐛 Решение проблем
+### Slow responses
+- Reduce `chunkSize` in config
+- Use smaller LLM model
+- Consider using OpenAI API
 
-### "projectConfig.json не найден"
-Запустите `mca init` для создания конфигурации.
+## Development
 
-### "Chunks не найдены"
-Запустите `mca index` после инициализации.
+```bash
+# Clone repository
+git clone https://github.com/nikita-bekish/my-code-assistant.git
+cd my-code-assistant
 
-### Плохие результаты поиска
-- Увеличьте `maxResults` в LLM конфиге
-- Отрегулируйте `chunkSize` (попробуйте 200-600 слов)
-- Улучшите системный `prompt` с доменными знаниями
+# Install dependencies
+npm install
 
-### Чат не отвечает
-- Убедитесь что `indexing.includeFolders` содержит файлы
-- Проверьте что `indexing.includeFileTypes` соответствует вашим файлам
-- Проверьте что Ollama запущен (если используете локальный LLM)
+# Build
+npm run build
 
-## 📄 Лицензия
+# Test locally
+npm link
+code-assistant --help
+```
 
-MIT
+## License
 
-## 🤝 Внесение вклада
+MIT © Nikita Bekish
 
-Вклады приветствуются! Подробнее см. [ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+## Links
 
-## 📞 Поддержка
-
-- Проверьте [документацию](./docs/)
-- Изучите [примеры](./docs/EXAMPLES.md)
-- Читайте [API справочник](./docs/API.md)
-
-## 🎓 Учебные ресурсы
-
-- **Архитектура** - [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
-- **Установка** - [SETUP.md](./docs/SETUP.md)
-- **Конфигурация** - [CONFIG.md](./docs/CONFIG.md)
-- **Примеры** - [EXAMPLES.md](./docs/EXAMPLES.md)
-- **API** - [API.md](./docs/API.md)
-
----
-
-**Счастливого кодирования! 🚀**
-
-Создано с ❤️ для разработчиков, которые хотят лучше понимать свой код.
+- [GitHub](https://github.com/nikita-bekish/my-code-assistant)
+- [Issues](https://github.com/nikita-bekish/my-code-assistant/issues)
+- [npm](https://www.npmjs.com/package/@nikita-bekish/code-assistant)
