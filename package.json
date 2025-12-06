@@ -1,6 +1,6 @@
 {
   "name": "@nikita-bekish/code-assistant",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI-powered code assistant CLI with RAG, LLM classification, and MCP tools for frontend development",
   "bin": {
     "code-assistant": "./bin/cli.js"
