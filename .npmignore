@@ -45,3 +45,21 @@ yarn-error.log*
 !README.md
 !LICENSE
 !package.json
+
+# Exclude test/development scripts from npm package
+dist/scripts/
+dist/start-*.js
+dist/start-*.d.ts
+dist/start-*.js.map
+dist/start-*.d.ts.map
+dist/test-*.js
+dist/test-*.d.ts
+dist/test-*.js.map
+dist/test-*.d.ts.map
+dist/src/badCode.*
+
+# Source test files
+scripts/
+start-*.ts
+test-*.ts
+src/badCode.ts

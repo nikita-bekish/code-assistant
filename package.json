@@ -7,9 +7,8 @@
   },
   "type": "module",
   "files": [
-    "dist",
+    "dist/src",
     "bin",
-    "src/data",
     "README.md",
     "LICENSE"
   ],
