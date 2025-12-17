@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import "dotenv/config";
 import chalk from "chalk";
 import fs from "fs/promises";
 import inquirer from "inquirer";
@@ -10,6 +11,7 @@ import {
   CodeAssistant,
   ProjectIndexer,
 } from "../dist/src/index.js";
+import { VoiceInterface } from "../dist/src/speech/voiceInterface.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -181,13 +183,31 @@ async function startChat() {
   }
 }
 
+async function startGodAgent() {
+  console.log(chalk.cyan.bold("\n🎙️  Starting God Agent (Voice Interface)\n"));
+
+  const config = await loadConfig("projectConfig.json");
+
+  try {
+    const assistant = new CodeAssistant(config);
+    await assistant.initialize();
+
+    const voiceInterface = new VoiceInterface(assistant);
+    await voiceInterface.startWithPlanConfirmation();
+  } catch (error) {
+    console.error(chalk.red(`\n✗ God Agent failed: ${error}\n`));
+    process.exit(1);
+  }
+}
+
 async function showHelp() {
   console.log(chalk.cyan.bold("\n🚀 My Code Assistant - CLI\n"));
-  console.log(chalk.white("Usage: mca <command>\n"));
+  console.log(chalk.white("Usage: code-assistant <command>\n"));
   console.log("Commands:");
   console.log(chalk.white("  init     Initialize a new project configuration"));
   console.log(chalk.white("  index    Index the project codebase"));
   console.log(chalk.white("  chat     Start interactive chat"));
+  console.log(chalk.white("  god      Start God Agent (voice interface)"));
   console.log(chalk.white("  help     Show this help message\n"));
 }
 
@@ -203,6 +223,9 @@ async function main() {
       break;
     case "chat":
       await startChat();
+      break;
+    case "god":
+      await startGodAgent();
       break;
     case "help":
     case "--help":

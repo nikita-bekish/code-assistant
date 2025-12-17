@@ -4,4 +4,5 @@ export { GitHelper } from './gitHelper.js';
 export { ChatBotCLI } from './chatbot.js';
 export { RAGPipeline } from './rag/ragPipeline.js';
 export { ConversationManager } from './rag/conversationManager.js';
+export { VoiceInterface } from './speech/voiceInterface.js';
 export * from './types/index.js';
