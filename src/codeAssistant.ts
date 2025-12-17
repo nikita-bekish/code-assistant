@@ -100,7 +100,7 @@ export class CodeAssistant {
           provider: "openai",
           model: this.config.llm.model || "gpt-3.5-turbo",
           temperature: this.config.llm.temperature || 0.2,
-          maxTokens: 2000,
+          maxTokens: 200,
           apiKey: openaiKey,
         };
         this.llm = new OpenAIProvider(llmConfig);
@@ -956,7 +956,8 @@ DO NOT provide generic answers - ALWAYS use the available tools!`;
         }
         case "create_task": {
           if (!this.tasksApi) return "Error: Tasks API client not initialized";
-          const { title, description, priority, assignee, depends_on } = input || {};
+          const { title, description, priority, assignee, depends_on } =
+            input || {};
           if (!title || !description || !assignee) {
             return "Error: title, description, and assignee are required for create_task";
           }
@@ -966,7 +967,7 @@ DO NOT provide generic answers - ALWAYS use the available tools!`;
               description,
               priority,
               assignee,
-              depends_on
+              depends_on,
             });
             return JSON.stringify(
               {
