@@ -1,27 +1,50 @@
 {
-  "name": "my-code-assistant",
-  "version": "0.1.0",
-  "description": "Universal code assistant framework for any project with RAG and Git integration",
-  "main": "dist/index.js",
+  "name": "@nikita-bekish/code-assistant",
+  "version": "1.0.1",
+  "description": "AI-powered code assistant CLI with RAG, LLM classification, and MCP tools for frontend development",
   "bin": {
-    "mca": "./bin/cli.js"
+    "code-assistant": "./bin/cli.js"
   },
   "type": "module",
+  "files": [
+    "dist/src",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node src/index.ts",
-    "start": "node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [
     "code-assistant",
     "rag",
     "git",
     "ai",
-    "cli"
+    "cli",
+    "llm",
+    "frontend",
+    "typescript",
+    "mcp",
+    "ollama"
   ],
-  "author": "My Code Assistant",
+  "author": "Nikita Bekish <bekish.nikita1997@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nikita-bekish/my-code-assistant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nikita-bekish/my-code-assistant/issues"
+  },
+  "homepage": "https://github.com/nikita-bekish/my-code-assistant#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@langchain/ollama": "^1.0.2",
     "@modelcontextprotocol/sdk": "^1.23.0",

@@ -33,7 +33,7 @@ const DEFAULT_CONFIG = {
       ".claude",
     ],
     includeFileTypes: [".ts", ".tsx", ".js", ".jsx", ".md", ".json", ".py"],
-    excludePatterns: ["*.test.*", "*.spec.*", "*.min.js"],
+    excludePatterns: ["*.test.*", "*.spec.*", "*.min.js", "package.json", "package-lock.json", "tsconfig.json"],
     maxFileSize: "1MB",
     chunkSize: 400,
     chunkOverlap: 100,
@@ -52,7 +52,7 @@ const DEFAULT_CONFIG = {
   },
   prompt: {
     system:
-      "You are a helpful code assistant for {projectName}. Help developers understand the codebase, explain architecture, suggest implementations. Always cite sources.",
+      "You are a helpful code assistant for {projectName}. Help developers understand the codebase, explain architecture, suggest implementations. You can also analyze error logs and provide insights on errors, failures, and system issues. When analyzing logs, provide statistics, identify patterns, and give actionable recommendations. Always cite sources.",
     language: "en",
   },
 };
